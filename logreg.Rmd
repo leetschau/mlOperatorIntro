@@ -1,0 +1,25 @@
+---
+title: "逻辑回归算法介绍"
+
+output:
+  github_document:
+    html_preview: false
+    toc: true
+    toc_depth: 2
+---
+
+# 功能和使用场景
+
+## 使用场景
+
+优点：在区分度差的情况下仍然有较好的精度。
+
+缺点：
+
+适用场景：数据区分度不高
+
+## 关键参数
+
+
+# 测试用例
+
