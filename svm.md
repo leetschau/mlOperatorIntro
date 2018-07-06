@@ -73,7 +73,9 @@ small.cost <- svm(y ~ ., data = dat.train, kernel = 'linear', cost = 0.1, scale 
 plot(small.cost, dat.train)
 ```
 
-![](svm_files/figure-markdown_github/unnamed-chunk-2-1.png) 支持向量分布：
+![](svm_files/figure-markdown_github/unnamed-chunk-2-1.png)
+
+支持向量分布：
 
 ``` r
 summary(small.cost)
@@ -118,7 +120,9 @@ plot(dat.train$x.1, dat.train$x.2, col = as.integer(dat.train$y) + 1)
 points(err.points$x.1, err.points$x.2, pch = 5, col = 'darkgreen', cex = 2)
 ```
 
-![](svm_files/figure-markdown_github/unnamed-chunk-4-1.png) 泛化错误率：
+![](svm_files/figure-markdown_github/unnamed-chunk-4-1.png)
+
+泛化错误率：
 
 ``` r
 small.cost.pred <- predict(small.cost, newdata = dat.test)
@@ -218,6 +222,8 @@ points(err.points$x.1, err.points$x.2, pch = 5, col = 'darkgreen', cex = 2)
 
 ![](svm_files/figure-markdown_github/unnamed-chunk-9-1.png)
 
+最优的 *cost* 应通过 cross-validation 确定。
+
 ### degree 影响分析
 
 ### gamma 影响分析
@@ -227,12 +233,48 @@ points(err.points$x.1, err.points$x.2, pch = 5, col = 'darkgreen', cex = 2)
 
 ``` r
 set.seed(1)
-x <- rbind(x, matrix(rnorm(50 * 2),  ncol = 2))
-y <- c(y, rep(0, 50))
-x[y == 0, 2] <- x[y == 0, 2] + 2
+dis <- 3
+x <- matrix(rnorm(250 * 2), ncol = 2)
+x[1:100, ] <- x[1:100, ] + dis
+x[101:150, ] <- x[101:150, ] - dis
+x[201:250, 2] <- x[201:250, 2] + dis
+y <- c(rep(0, 150), rep(1, 50), rep(2, 50))
 dat <- data.frame(x = x, y = as.factor(y))
-par(mfrow = c(1,1))
-plot(x, col = (y + 1))
+plot(x, col = y + 1)
 ```
 
 ![](svm_files/figure-markdown_github/unnamed-chunk-10-1.png)
+
+使用 one-vs-one 模式拟合 径向核SVM：
+
+``` r
+svmfit <- svm(y ~ ., data = dat, kernel = 'radial')
+plot(svmfit, dat)
+```
+
+![](svm_files/figure-markdown_github/unnamed-chunk-11-1.png) 使用线性核：
+
+``` r
+svmfit <- svm(y ~ ., data = dat, kernel = 'linear')
+plot(svmfit, dat)
+```
+
+![](svm_files/figure-markdown_github/unnamed-chunk-12-1.png)
+
+使用二次多项式核：
+
+``` r
+svmfit <- svm(y ~ ., data = dat, kernel = 'polynomial', degree = 2)
+plot(svmfit, dat)
+```
+
+![](svm_files/figure-markdown_github/unnamed-chunk-13-1.png)
+
+使用高次多项式核：
+
+``` r
+svmfit <- svm(y ~ ., data = dat, kernel = 'polynomial', degree = 5)
+plot(svmfit, dat)
+```
+
+![](svm_files/figure-markdown_github/unnamed-chunk-14-1.png)
