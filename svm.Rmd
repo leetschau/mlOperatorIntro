@@ -37,9 +37,7 @@ SVM的基本原理是在训练集所在的超空间中找到一个能够划分�
 
 # 测试用例
 
-## 二分类问题
-
-### cost 影响分析
+## cost 分析
 
 训练集包含20个观测点，其中一半符合期望为 (0, 0),方差为1的正态分布，另一半符合期望为 (2, 2),方差为1的正态分布：
 ```{r}
@@ -119,11 +117,7 @@ points(err.points$x.1, err.points$x.2, pch = 5, col = 'darkgreen', cex = 2)
 
 最优的 *cost* 应通过 cross-validation 确定。
 
-### degree 影响分析
-
-### gamma 影响分析
-
-## 多分类问题
+## kernel 和 degree 分析
 
 
 ```{r}
