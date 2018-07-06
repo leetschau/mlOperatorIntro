@@ -5,15 +5,15 @@ output:
   github_document:
     html_preview: false
     toc: true
-    toc_depth: 2
+    toc_depth: 3
 ---
 
 # 功能和使用场景
 
 ## 使用场景
 
-支持向量机（SVM）主要用于求解分类问题。
-经典SVM算法用来处理二分类问题，扩展后可以用于求解多分类问题。
+支持向量机（SVM）主要用于求解有监督的分类问题。
+经典SVM算法用于求解二分类问题，扩展后可以求解多分类问题。
 
 SVM的基本原理是在训练集所在的超空间中找到一个能够划分训练数据的最大间隙的超平面，根据核函数的不同，超平面可以是线性的或者非线性的，可以允许一定程度的训练错误率，以降低过拟合风险。
 
@@ -37,20 +37,97 @@ SVM的基本原理是在训练集所在的超空间中找到一个能够划分�
 
 # 测试用例
 
-## 二分类
+## 二分类问题
 
+### cost 影响分析
+
+训练集包含20个观测点，其中一半符合期望为 (0, 0),方差为1的正态分布，另一半符合期望为 (2, 2),方差为1的正态分布：
 ```{r}
 library(e1071)
 set.seed(1)
-x <- matrix(rnorm(20 * 2), ncol = 2)
-y <- c(rep(-1, 10), rep(1, 10))
-x[y == 1, ] <- x[y == 1, ] + 1
-
-plot(x, col = (3 - y))
-
+dat.size <- 200
+x <- matrix(rnorm(dat.size * 2), ncol = 2)
+y <- c(rep(0, dat.size / 2), rep(1, dat.size / 2))
+x[y == 1, ] <- x[y == 1, ] + 2
 dat <- data.frame(x = x, y = as.factor(y))
-svmfit <- svm(y ~ ., data = dat, kernel = 'linear', cost = 10, scale = FALSE)
-plot(svmfit, dat)
+train <- sample(dat.size, dat.size / 2)
+dat.train <- dat[train, ]
+dat.test <- dat[-train, ]
+plot(dat.train$x.1, dat.train$x.2, col = as.integer(dat.train$y) + 1)
 ```
 
-## 多分类
+在训练集上拟合SVM，使用线性核，cost取0.1：
+```{r}
+small.cost <- svm(y ~ ., data = dat.train, kernel = 'linear', cost = 0.1, scale = FALSE)
+plot(small.cost, dat.train)
+```
+支持向量分布：
+```{r}
+summary(small.cost)
+```
+
+训练集容错情况：
+```{r}
+table(fitted = small.cost$fitted, truth = dat.train$y)
+err.points <- dat.train[small.cost$fitted != dat.train$y, ]
+plot(dat.train$x.1, dat.train$x.2, col = as.integer(dat.train$y) + 1)
+points(err.points$x.1, err.points$x.2, pch = 5, col = 'darkgreen', cex = 2)
+```
+泛化错误率：
+```{r}
+small.cost.pred <- predict(small.cost, newdata = dat.test)
+table(predict = small.cost.pred, truth = dat.test$y)
+err.points <- dat.test[small.cost.pred != dat.test$y, ]
+plot(dat.test$x.1, dat.test$x.2, col = as.integer(dat.test$y) + 1)
+points(err.points$x.1, err.points$x.2, pch = 5, col = 'darkgreen', cex = 2)
+```
+
+
+*cost* 改为100：
+```{r}
+big.cost <- svm(y ~ ., data = dat.train, kernel = 'linear', cost = 100, scale = FALSE)
+plot(big.cost, dat.train)
+```
+
+支持向量分布：
+```{r}
+summary(big.cost)
+```
+
+支持向量数量明显降低，模型 variance 升高。
+
+训练集容错情况：
+```{r}
+table(fitted = big.cost$fitted, truth = dat.train$y)
+err.points <- dat.train[big.cost$fitted != dat.train$y, ]
+plot(dat.train$x.1, dat.train$x.2, col = as.integer(dat.train$y) + 1)
+points(err.points$x.1, err.points$x.2, pch = 5, col = 'darkgreen', cex = 2)
+```
+
+训练集上的错误率降低了。
+
+泛化错误率：
+```{r}
+big.cost.pred <- predict(big.cost, newdata = dat.test)
+table(predict = big.cost.pred, truth = dat.test$y)
+err.points <- dat.test[big.cost.pred != dat.test$y, ]
+plot(dat.test$x.1, dat.test$x.2, col = as.integer(dat.test$y) + 1)
+points(err.points$x.1, err.points$x.2, pch = 5, col = 'darkgreen', cex = 2)
+```
+
+### degree 影响分析
+
+### gamma 影响分析
+
+## 多分类问题
+
+
+```{r}
+set.seed(1)
+x <- rbind(x, matrix(rnorm(50 * 2),  ncol = 2))
+y <- c(y, rep(0, 50))
+x[y == 0, 2] <- x[y == 0, 2] + 2
+dat <- data.frame(x = x, y = as.factor(y))
+par(mfrow = c(1,1))
+plot(x, col = (y + 1))
+```
