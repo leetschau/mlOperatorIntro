@@ -7,6 +7,7 @@
 -   [参数分析](#参数分析)
     -   [cost 分析](#cost-分析)
     -   [kernel 和 degree 分析](#kernel-和-degree-分析)
+-   [算法总结](#算法总结)
 
 功能和使用场景
 ==============
@@ -217,7 +218,9 @@ points(err.points$x.1, err.points$x.2, pch = 5, col = 'darkgreen', cex = 2)
 
 ![](svm_files/figure-markdown_github/unnamed-chunk-9-1.png)
 
-最优的 *cost* 应通过 cross-validation 确定。
+可以看到随着cost越高，容错性逐渐越低，margin变窄，bias变低，所以需要避免过拟合风险、提高模型稳定性时，采用较小的cost，否则使用较大的cost。
+
+实际建模过程中，最优的 *cost* 多通过 cross-validation 确定。
 
 kernel 和 degree 分析
 ---------------------
@@ -269,3 +272,10 @@ plot(svmfit, dat)
 ```
 
 ![](svm_files/figure-markdown_github/unnamed-chunk-14-1.png)
+
+具体建模过程中，要根据业务场景对分类边界的类型（环状/曲线/直线）和复杂程度做大致的估计，再决定使用哪种类型的 kernel，如果使用多项式 kernel，边界越复杂，degree 越高，但过高会导致过拟合，可以结合 cross-validation, best tune 等技术确定最佳值。
+
+算法总结
+========
+
+SVM算法是监督学习中分类场景最常用之一，它能适应各种数据特征，具有精度高、预测速度快的优点，但需要的训练数据量相对较大，且属于黑盒预测。适用于数据区分度好，样本量大，精度要求高，不需要高解释能力的业务场景。
