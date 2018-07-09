@@ -273,7 +273,7 @@ plot(svmfit, dat)
 
 ![](svm_files/figure-markdown_github/unnamed-chunk-14-1.png)
 
-具体建模过程中，要根据业务场景对分类边界的类型（环状/曲线/直线）和复杂程度做大致的估计，再决定使用哪种类型的 kernel，如果使用多项式 kernel，边界越复杂，degree 越高，但过高会导致过拟合，可以结合 cross-validation, best tune 等技术确定最佳值。
+可以看到，当选择的 kernel 不适合具体业务场景时，不论如何提高 kernel 的拟合能力，泛化错误率都难以降低，且会带来严重的过拟合，所以具体建模过程中，首先要根据业务场景对分类边界的类型（环状/曲线/直线）和复杂程度做大致的估计，再决定使用哪种类型的 kernel，如果使用多项式 kernel，边界越复杂，degree 越高，但过高会导致过拟合，可以结合 cross-validation, best tune 等技术确定最佳值。
 
 算法总结
 ========
