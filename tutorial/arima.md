@@ -24,33 +24,57 @@
 自回归
 ======
 
-如果时间序列变量 *y* 在 时间点 *t* 上的值是过去 *p* 个时间点上值的线性组合，则 *y* 是 *p* 阶自回归的：
-*y*<sub>*t*</sub> = *δ* + *ϕ*<sub>1</sub>*y*<sub>*t* − 1</sub> + *ϕ*<sub>2</sub>*y*<sub>*t* − 2</sub> + … + *ϕ*<sub>*p*</sub>*y*<sub>*t* − *p*</sub> + *ϵ*<sub>*t*</sub>
+如果时间序列变量 ![y](https://latex.codecogs.com/png.latex?y "y") 在 时间点 ![t](https://latex.codecogs.com/png.latex?t "t") 上的值是过去 ![p](https://latex.codecogs.com/png.latex?p "p") 个时间点上值的线性组合，则 ![y](https://latex.codecogs.com/png.latex?y "y") 是 ![p](https://latex.codecogs.com/png.latex?p "p") 阶自回归的：
 
-其中 *δ* 可以理解为线性回归中的截距（intercept），*ϵ*<sub>*t*</sub> 是随机扰动。
+![
+y\_t = \\delta + \\phi\_1 y\_{t-1} + \\phi\_2 y\_{t-2} + \\dots + \\phi\_p y\_{t-p} + \\epsilon\_t
+](https://latex.codecogs.com/png.latex?%0Ay_t%20%3D%20%5Cdelta%20%2B%20%5Cphi_1%20y_%7Bt-1%7D%20%2B%20%5Cphi_2%20y_%7Bt-2%7D%20%2B%20%5Cdots%20%2B%20%5Cphi_p%20y_%7Bt-p%7D%20%2B%20%5Cepsilon_t%0A "
+y_t = \delta + \phi_1 y_{t-1} + \phi_2 y_{t-2} + \dots + \phi_p y_{t-p} + \epsilon_t
+")
+
+其中 ![\\delta](https://latex.codecogs.com/png.latex?%5Cdelta "\delta") 可以理解为线性回归中的截距（intercept），![\\epsilon\_t](https://latex.codecogs.com/png.latex?%5Cepsilon_t "\epsilon_t") 是随机扰动。
 
 移动平均
 ========
 
-如果时间序列变量 *y* 在 时间点 *t* 上的值是当前以及过去 *q* 个时间点上随即扰动项的线性组合，则此时间序列是 *q* 阶移动平均的：
-*y*<sub>*t*</sub> = *μ* + *θ*<sub>1</sub>*ϵ*<sub>*t* − 1</sub> + *θ*<sub>2</sub>*ϵ*<sub>*t* − 2</sub> + … + *θ*<sub>*q*</sub>*ϵ*<sub>*t* − *q*</sub> + *ϵ*<sub>*t*</sub>
+如果时间序列变量 ![y](https://latex.codecogs.com/png.latex?y "y") 在 时间点 ![t](https://latex.codecogs.com/png.latex?t "t") 上的值是当前以及过去 ![q](https://latex.codecogs.com/png.latex?q "q") 个时间点上随即扰动项的线性组合，则此时间序列是 ![q](https://latex.codecogs.com/png.latex?q "q") 阶移动平均的：
+
+![
+y\_t = \\mu + \\theta\_1 \\epsilon\_{t-1} + \\theta\_2 \\epsilon\_{t-2} + \\dots + \\theta\_q \\epsilon\_{t-q} + \\epsilon\_t
+](https://latex.codecogs.com/png.latex?%0Ay_t%20%3D%20%5Cmu%20%2B%20%5Ctheta_1%20%5Cepsilon_%7Bt-1%7D%20%2B%20%5Ctheta_2%20%5Cepsilon_%7Bt-2%7D%20%2B%20%5Cdots%20%2B%20%5Ctheta_q%20%5Cepsilon_%7Bt-q%7D%20%2B%20%5Cepsilon_t%0A "
+y_t = \mu + \theta_1 \epsilon_{t-1} + \theta_2 \epsilon_{t-2} + \dots + \theta_q \epsilon_{t-q} + \epsilon_t
+")
+
  \# ARMA
 
-满足*p*阶自回归和*q*阶移动平均的稳态时间序列可以表示为：
-$$
+满足![p](https://latex.codecogs.com/png.latex?p "p")阶自回归和![q](https://latex.codecogs.com/png.latex?q "q")阶移动平均的稳态时间序列可以表示为：
+
+![
 y\_t = \\delta + \\sum\_{i=1}^p \\phi\_i y\_{t-i} + \\sum\_{j=1}^q \\theta\_j \\epsilon\_{t-j} + \\epsilon\_t \\tag{1}
-$$
+](https://latex.codecogs.com/png.latex?%0Ay_t%20%3D%20%5Cdelta%20%2B%20%5Csum_%7Bi%3D1%7D%5Ep%20%5Cphi_i%20y_%7Bt-i%7D%20%2B%20%5Csum_%7Bj%3D1%7D%5Eq%20%5Ctheta_j%20%5Cepsilon_%7Bt-j%7D%20%2B%20%5Cepsilon_t%20%5Ctag%7B1%7D%0A "
+y_t = \delta + \sum_{i=1}^p \phi_i y_{t-i} + \sum_{j=1}^q \theta_j \epsilon_{t-j} + \epsilon_t \tag{1}
+")
 
 记为：
-*A**R**M**A*(*p*, *q*)
+
+![
+ARMA(p, q)
+](https://latex.codecogs.com/png.latex?%0AARMA%28p%2C%20q%29%0A "
+ARMA(p, q)
+")
 
 ARIMA
 =====
 
-为了能够处理非稳态时间序列，采用差分 (difference) 处理非稳态序列，直到它符合稳态条件。 一个非稳态时间序列经过 *d* 次差分后变为 *A**R**M**A*(*p*, *q*)，则这个时间序列记为：
-*A**R**I**M**A*(*p*, *d*, *q*)
+为了能够处理非稳态时间序列，采用差分 (difference) 处理非稳态序列，直到它符合稳态条件。 一个非稳态时间序列经过 ![d](https://latex.codecogs.com/png.latex?d "d") 次差分后变为 ![ARMA(p, q)](https://latex.codecogs.com/png.latex?ARMA%28p%2C%20q%29 "ARMA(p, q)")，则这个时间序列记为：
 
-当 *p*, *d*, *q* 确定后，将时间序列代入式$\\eqref{1}$可确定模型参数。
+![
+ARIMA(p, d, q)
+](https://latex.codecogs.com/png.latex?%0AARIMA%28p%2C%20d%2C%20q%29%0A "
+ARIMA(p, d, q)
+")
+
+当 ![p, d, q](https://latex.codecogs.com/png.latex?p%2C%20d%2C%20q "p, d, q") 确定后，将时间序列代入式![\\eqref{1}](https://latex.codecogs.com/png.latex?%5Ceqref%7B1%7D "\eqref{1}")可确定模型参数。
 
 典型场景分析
 ============
@@ -86,7 +110,7 @@ summary(mdl)
     ##                     ACF1
     ## Training set -0.03228482
 
-可知这是一个 (1,1,1) 阶ARIMA模型，*ϕ*<sub>1</sub> = 0.2544，*θ*<sub>1</sub> = −0.8741，模型残差：
+可知这是一个 (1,1,1) 阶ARIMA模型，![\\phi\_1 = 0.2544](https://latex.codecogs.com/png.latex?%5Cphi_1%20%3D%200.2544 "\phi_1 = 0.2544")，![\\theta\_1 = -0.8741](https://latex.codecogs.com/png.latex?%5Ctheta_1%20%3D%20-0.8741 "\theta_1 = -0.8741")，模型残差：
 
 ``` r
 tsdisplay(residuals(mdl), lag.max=45, main='(1,1,1) Model Residuals')
@@ -94,7 +118,7 @@ tsdisplay(residuals(mdl), lag.max=45, main='(1,1,1) Model Residuals')
 
 ![](arima_files/figure-markdown_github/unnamed-chunk-2-1.png)
 
-可以看到残差基本符合标准正态分布，满足式$\\eqref{1}$中*ϵ*的要求。
+可以看到残差基本符合标准正态分布，满足式![\\eqref{1}](https://latex.codecogs.com/png.latex?%5Ceqref%7B1%7D "\eqref{1}")中![\\epsilon](https://latex.codecogs.com/png.latex?%5Cepsilon "\epsilon")的要求。
 
 基于上述参数可以预测未来5年（1971 ~ 1975）的尼罗河水量：
 

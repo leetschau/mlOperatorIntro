@@ -2,6 +2,7 @@
 title: "基于ARIMA的时间序列分析和预测"
 output:
   github_document:
+    pandoc_args: --webtex
     html_preview: false
     toc: true
     toc_depth: 3
