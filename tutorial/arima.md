@@ -50,9 +50,9 @@ y_t = \mu + \theta_1 \epsilon_{t-1} + \theta_2 \epsilon_{t-2} + \dots + \theta_q
 满足![p](https://latex.codecogs.com/png.latex?p "p")阶自回归和![q](https://latex.codecogs.com/png.latex?q "q")阶移动平均的稳态时间序列可以表示为：
 
 ![
-y\_t = \\delta + \\sum\_{i=1}^p \\phi\_i y\_{t-i} + \\sum\_{j=1}^q \\theta\_j \\epsilon\_{t-j} + \\epsilon\_t \\tag{1}
-](https://latex.codecogs.com/png.latex?%0Ay_t%20%3D%20%5Cdelta%20%2B%20%5Csum_%7Bi%3D1%7D%5Ep%20%5Cphi_i%20y_%7Bt-i%7D%20%2B%20%5Csum_%7Bj%3D1%7D%5Eq%20%5Ctheta_j%20%5Cepsilon_%7Bt-j%7D%20%2B%20%5Cepsilon_t%20%5Ctag%7B1%7D%0A "
-y_t = \delta + \sum_{i=1}^p \phi_i y_{t-i} + \sum_{j=1}^q \theta_j \epsilon_{t-j} + \epsilon_t \tag{1}
+y\_t = \\delta + \\sum\_{i=1}^p \\phi\_i y\_{t-i} + \\sum\_{j=1}^q \\theta\_j \\epsilon\_{t-j} + \\epsilon\_t \\tag{1} \\label{1}
+](https://latex.codecogs.com/png.latex?%0Ay_t%20%3D%20%5Cdelta%20%2B%20%5Csum_%7Bi%3D1%7D%5Ep%20%5Cphi_i%20y_%7Bt-i%7D%20%2B%20%5Csum_%7Bj%3D1%7D%5Eq%20%5Ctheta_j%20%5Cepsilon_%7Bt-j%7D%20%2B%20%5Cepsilon_t%20%5Ctag%7B1%7D%20%5Clabel%7B1%7D%0A "
+y_t = \delta + \sum_{i=1}^p \phi_i y_{t-i} + \sum_{j=1}^q \theta_j \epsilon_{t-j} + \epsilon_t \tag{1} \label{1}
 ")
 
 记为：

@@ -39,7 +39,7 @@ $$
 
 满足$p$阶自回归和$q$阶移动平均的稳态时间序列可以表示为：
 $$
-y_t = \delta + \sum_{i=1}^p \phi_i y_{t-i} + \sum_{j=1}^q \theta_j \epsilon_{t-j} + \epsilon_t \tag{1}
+y_t = \delta + \sum_{i=1}^p \phi_i y_{t-i} + \sum_{j=1}^q \theta_j \epsilon_{t-j} + \epsilon_t \tag{1} \label{1}
 $$
 
 记为：
