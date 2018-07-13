@@ -1,0 +1,64 @@
+---
+title: "贝叶斯估计"
+output:
+  github_document:
+    pandoc_args: --webtex
+    html_preview: true
+    toc: true
+    toc_depth: 3
+---
+
+# 功能和使用场景
+
+贝叶斯估计基于贝叶斯定义（[Bayes' theorem](https://en.wikipedia.org/wiki/Bayes%27_theorem)）根据已有的先验概率（prior probability）计算出后验概率（posterior probability），在类别型特征彼此独立，或者数值型特征符合正态分布的条件下，贝叶斯估计可以得到理论上的最佳估计。
+
+优点：适合分析特征为类型值的数据；
+
+缺点：特征间不能有相关性，处理数值型特征能力差；
+
+# 参数分析
+
+贝叶斯估计只要指定特征列和响应值，没有其他参赛需要指定。
+
+# 实例分析
+
+下面是泰坦尼克号幸存者特征分析。
+
+导入数据：
+```{r}
+library(e1071)
+Titanic_df <- as.data.frame(Titanic)
+#Creating data from table
+repeating_sequence <- rep.int(seq_len(nrow(Titanic_df)), Titanic_df$Freq) #This will repeat each combination equal to the frequency of each combination
+#Create the dataset by row repetition created
+Titanic_dataset <- Titanic_df[repeating_sequence,]
+#We no longer need the frequency, drop the feature
+Titanic_dataset$Freq <- NULL
+```
+
+使用贝叶斯估计拟合：
+```{r}
+#Fitting the Naive Bayes model
+Naive_Bayes_Model <- naiveBayes(Survived ~., data = Titanic_dataset)
+Naive_Bayes_Model
+```
+
+预测：
+```{r}
+#Prediction on the dataset
+NB_Predictions <- predict(Naive_Bayes_Model, Titanic_dataset)
+#Confusion matrix to check accuracy
+table(NB_Predictions, Titanic_dataset$Survived)
+```
+
+# 算法总结
+
+# 参考文献
+
+* [Understanding Naïve Bayes Classifier Using R](https://www.r-bloggers.com/understanding-naive-bayes-classifier-using-r/)
+
+* [Bayesian Estimation](https://onlinecourses.science.psu.edu/stat414/node/241/)
+
+* [Linear Discriminant Analysis vs Naive Bayes](https://stackoverflow.com/questions/46396552/linear-discriminant-analysis-vs-naive-bayes)
+
+* 
