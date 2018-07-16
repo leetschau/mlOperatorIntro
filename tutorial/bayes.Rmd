@@ -42,7 +42,9 @@ head(titan.dat)
 dim(titan.dat)
 ```
 
-拆分为训练集和测试集：
+上面的 data frame `titan.dat` 是本算法的**输入**，包含3个特征列 *Class*, *Sex* 和 *Age*，以及响应变量（也就是有监督学习中的“标签”）*Survived*。
+
+下面取输入数据中 80% 的观测作为训练集，剩下 20% 作为测试集：
 ```{r}
 train <- sample(nrow(titan.dat), nrow(titan.dat) * 0.8)
 dat.train <- titan.dat[train, ]
@@ -58,12 +60,21 @@ nb.model$tables
 
 训练数据表明女性和孩子的生存概率远高于男性和成人，一等舱到三等舱的生存概率依次下降，船员的生存概率最低。
 
-泛化错误率：
+使用上面训练的模型在测试集上计算预测值，并计算泛化错误率：
 ```{r}
 nb.pred <- predict(nb.model, newdata = dat.test)
+nb.pred
 table(nb.pred, dat.test$Survived)
 (59 + 19) / (286 + 59 + 19 + 77)
 ```
+
+上面的向量 `nb.pred` 就是算法的计算结果，将它与测试集的特征列组合形成算法的**输出**：
+```{r}
+output <- dat.test
+output$Survived <- nb.pred
+head(output)
+```
+
 
 ## 与其他分类方法的比较
 
