@@ -3,7 +3,7 @@ title: "基于ARIMA的时间序列分析和预测"
 output:
   github_document:
     pandoc_args: --webtex
-    html_preview: false
+    html_preview: true
     toc: true
     toc_depth: 3
 ---
@@ -35,11 +35,12 @@ $$
 $$
 y_t = \mu + \theta_1 \epsilon_{t-1} + \theta_2 \epsilon_{t-2} + \dots + \theta_q \epsilon_{t-q} + \epsilon_t
 $$
+
 # ARMA
 
 满足$p$阶自回归和$q$阶移动平均的稳态时间序列可以表示为：
 $$
-y_t = \delta + \sum_{i=1}^p \phi_i y_{t-i} + \sum_{j=1}^q \theta_j \epsilon_{t-j} + \epsilon_t \tag{1} \label{1}
+y_t = \delta + \sum_{i=1}^p \phi_i y_{t-i} + \sum_{j=1}^q \theta_j \epsilon_{t-j} + \epsilon_t \tag{1}
 $$
 
 记为：
@@ -55,15 +56,22 @@ $$
 ARIMA(p, d, q)
 $$
 
-当 $p, d, q$ 确定后，将时间序列代入式$\eqref{1}$可确定模型参数。
+当 $p, d, q$ 确定后，将时间序列代入 式(1) 可确定模型参数。
 
-# 典型场景分析
+# 实例分析
 
-这里采用1871 ~ 1970年尼罗河水量作为输入数据创建ARIMA模型：
+这里采用1871 ~ 1970年尼罗河水量作为算法的**输入**数据：
 
 ```{r}
 library(forecast)
+Nile
 plot(Nile)
+```
+
+可以看到输入是一个时间序列，起始时间 1871 年，结束时间 1970 年，序列中的每个数值代表当年的尼罗河水量。
+
+拟合ARIMA模型：
+```{r}
 mdl <- auto.arima(Nile)
 summary(mdl)
 ```
@@ -73,18 +81,17 @@ summary(mdl)
 tsdisplay(residuals(mdl), lag.max=45, main='(1,1,1) Model Residuals')
 ```
 
-可以看到残差基本符合标准正态分布，满足式$\eqref{1}$中$\epsilon$的要求。
+可以看到残差基本符合标准正态分布，满足 式(1) 中$\epsilon$的要求。
 
 基于上述参数可以预测未来5年（1971 ~ 1975）的尼罗河水量：
 ```{r}
 predict(mdl, 5)
 ```
 
+可以看到算法的**输出**仍然是一个时间序列，起始时间为 1971 年，结束时间为 1975 年，序列的每个数值是当年尼罗河水量的预测值（*pred* 部分）以及标准差（*se* 部分）。
 
 # 参考文献
 
 * https://www.analyticsvidhya.com/blog/2015/12/complete-tutorial-time-series-modeling/
 
 * https://rstudio-pubs-static.s3.amazonaws.com/345790_3c1459661736433382863ed19c30ea55.html
-
-* 

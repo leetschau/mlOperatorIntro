@@ -4,6 +4,7 @@
 -   [稳态时间序列](#稳态时间序列)
 -   [自回归](#自回归)
 -   [移动平均](#移动平均)
+-   [ARMA](#arma)
 -   [ARIMA](#arima)
 -   [典型场景分析](#典型场景分析)
 -   [参考文献](#参考文献)
@@ -45,14 +46,15 @@ y\_t = \\mu + \\theta\_1 \\epsilon\_{t-1} + \\theta\_2 \\epsilon\_{t-2} + \\dots
 y_t = \mu + \theta_1 \epsilon_{t-1} + \theta_2 \epsilon_{t-2} + \dots + \theta_q \epsilon_{t-q} + \epsilon_t
 ")
 
- \# ARMA
+ARMA
+====
 
 满足![p](https://latex.codecogs.com/png.latex?p "p")阶自回归和![q](https://latex.codecogs.com/png.latex?q "q")阶移动平均的稳态时间序列可以表示为：
 
 ![
-y\_t = \\delta + \\sum\_{i=1}^p \\phi\_i y\_{t-i} + \\sum\_{j=1}^q \\theta\_j \\epsilon\_{t-j} + \\epsilon\_t \\tag{1} \\label{1}
-](https://latex.codecogs.com/png.latex?%0Ay_t%20%3D%20%5Cdelta%20%2B%20%5Csum_%7Bi%3D1%7D%5Ep%20%5Cphi_i%20y_%7Bt-i%7D%20%2B%20%5Csum_%7Bj%3D1%7D%5Eq%20%5Ctheta_j%20%5Cepsilon_%7Bt-j%7D%20%2B%20%5Cepsilon_t%20%5Ctag%7B1%7D%20%5Clabel%7B1%7D%0A "
-y_t = \delta + \sum_{i=1}^p \phi_i y_{t-i} + \sum_{j=1}^q \theta_j \epsilon_{t-j} + \epsilon_t \tag{1} \label{1}
+y\_t = \\delta + \\sum\_{i=1}^p \\phi\_i y\_{t-i} + \\sum\_{j=1}^q \\theta\_j \\epsilon\_{t-j} + \\epsilon\_t \\tag{1}
+](https://latex.codecogs.com/png.latex?%0Ay_t%20%3D%20%5Cdelta%20%2B%20%5Csum_%7Bi%3D1%7D%5Ep%20%5Cphi_i%20y_%7Bt-i%7D%20%2B%20%5Csum_%7Bj%3D1%7D%5Eq%20%5Ctheta_j%20%5Cepsilon_%7Bt-j%7D%20%2B%20%5Cepsilon_t%20%5Ctag%7B1%7D%0A "
+y_t = \delta + \sum_{i=1}^p \phi_i y_{t-i} + \sum_{j=1}^q \theta_j \epsilon_{t-j} + \epsilon_t \tag{1}
 ")
 
 记为：
@@ -74,7 +76,7 @@ ARIMA(p, d, q)
 ARIMA(p, d, q)
 ")
 
-当 ![p, d, q](https://latex.codecogs.com/png.latex?p%2C%20d%2C%20q "p, d, q") 确定后，将时间序列代入式![\\eqref{1}](https://latex.codecogs.com/png.latex?%5Ceqref%7B1%7D "\eqref{1}")可确定模型参数。
+当 ![p, d, q](https://latex.codecogs.com/png.latex?p%2C%20d%2C%20q "p, d, q") 确定后，将时间序列代入 式(1) 可确定模型参数。
 
 典型场景分析
 ============
@@ -118,7 +120,7 @@ tsdisplay(residuals(mdl), lag.max=45, main='(1,1,1) Model Residuals')
 
 ![](arima_files/figure-markdown_github/unnamed-chunk-2-1.png)
 
-可以看到残差基本符合标准正态分布，满足式![\\eqref{1}](https://latex.codecogs.com/png.latex?%5Ceqref%7B1%7D "\eqref{1}")中![\\epsilon](https://latex.codecogs.com/png.latex?%5Cepsilon "\epsilon")的要求。
+可以看到残差基本符合标准正态分布，满足 式(1) 中![\\epsilon](https://latex.codecogs.com/png.latex?%5Cepsilon "\epsilon")的要求。
 
 基于上述参数可以预测未来5年（1971 ~ 1975）的尼罗河水量：
 

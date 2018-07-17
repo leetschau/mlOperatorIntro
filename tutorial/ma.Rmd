@@ -1,0 +1,71 @@
+---
+title: "基于移动平均的数据平滑算法"
+output:
+  github_document:
+    pandoc_args: --webtex
+    html_preview: true
+    toc: true
+    toc_depth: 3
+---
+
+# 实现方法
+
+移动平均（moving average, MA）使用当前数据点以及单侧或者双侧的相邻数据点的（加权）平均值作为对当前数据点的修正，剔除序列中的高频成分，实现数据平滑的效果。参与平均的数据点越多，平滑效果越好。
+
+时间序列 $y$ 在 $t$ 时间点上双侧 MA 计算公式是：
+$$
+\hat y(t) = \frac{y(t-k) + y(t-k+1) + \dots + y(t) + \dots + y(t+k-1) + y(t+k)}{m}
+$$
+
+这里 $m$ 是阶数（*order*），也就是参与平均的数据点个数；$k = (m-1)/2$。
+
+
+# 参数分析
+
+以1980年到1994年澳大利亚瓶装酒销售量为例说明利用MA方法去除季节和随即波动，估计长期趋势的方法。
+本例中**输入数据**的数量值和时序图如下：
+```{r}
+library(forecast)
+wineind
+plot(wineind)
+```
+
+## order
+
+*order* 越大，越能包含更多的全局信息，平滑效果越好。
+下面是瓶装酒销售量以2个月、6个月和1年为阶数的计算结果对比：
+```{r}
+plot(wineind)
+mas2 <- ma(wineind, order = 2)
+mas6 <- ma(wineind, order = 6)
+mas12 <- ma(wineind, order = 12)
+lines(mas2, col = 'red')
+lines(mas6, col = 'darkgreen')
+lines(mas12, col = 'blue')
+```
+
+可以看到算法的**输出**也是一个时间序列，但长度小于输入时间序列，阶数越高，输出序列长度越短。
+
+实际使用过程中，根据平滑目标为阶数选择合理值，例如上面的例子中，如果希望分析年度波动，阶数不应大于12，如果分析目标是季度波动，则阶数不应大于4。
+
+## center
+
+当阶数为偶数时，未来数据点个数比过去数据点个数多一个。例如当 $m=8$ 时，当前数据点的值是未来4个相邻点与自身以及过去3个数据点的平均值。
+
+当 *center* 被设置为 *TRUE*，且 $m$ 是偶数时，$k = (m-1)/2$ 被分为两种情况：向上取整和向下取整，
+基于这两个值分别计算出 $\hat y(t)$ 的值，再取平均，得到最终结果。
+
+下面对比了不同的 *center* 设置下计算结果的差异：
+```{r}
+plot(wineind)
+mas8 <- ma(wineind, order = 6, centre = FALSE)
+mas8c <- ma(wineind, order = 6, centre = TRUE)
+lines(mas8, col = 'red')
+lines(mas8c, col = 'blue')
+```
+
+可以看到 `centre = TRUE` 时平均效果略好于 `centre = FALSE` 的结果，随着阶数的升高，差距会越来越小。
+
+# 算法总结
+
+移动平均是一种简单高效的数据平滑方法，计算量小，适用范围广。实际使用过程中，如果根据业务目标不能确定准确的阶数，可以结合方差分析或者CV技术确定最佳值。
