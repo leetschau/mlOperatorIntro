@@ -42,7 +42,7 @@ head(titan.dat)
 dim(titan.dat)
 ```
 
-上面的 data frame `titan.dat` 是本算法的**输入**，包含3个特征列 *Class*, *Sex* 和 *Age*，以及响应变量（也就是有监督学习中的“标签”）*Survived*。
+上面的 data frame `titan.dat` 是本算法的 **输入**，包含3个特征列 *Class*, *Sex* 和 *Age*，以及响应变量（也就是有监督学习中的“标签”）*Survived*。
 
 下面取输入数据中 80% 的观测作为训练集，剩下 20% 作为测试集：
 ```{r}
@@ -53,7 +53,7 @@ dat.test <- titan.dat[-train, ]
 
 基于训练集建立贝叶斯估计模型：
 ```{r}
-nb.model <- naiveBayes(Survived ~., data = dat.train)
+nb.model <- naiveBayes(Survived ~., data = dat.train)  # 基于输入数据 dat.train 和 公式建立贝叶斯模型
 summary(nb.model)
 nb.model$tables
 ```
@@ -68,7 +68,7 @@ table(nb.pred, dat.test$Survived)
 (59 + 19) / (286 + 59 + 19 + 77)
 ```
 
-上面的向量 `nb.pred` 就是算法的计算结果，将它与测试集的特征列组合形成算法的**输出**：
+上面的向量 `nb.pred` 就是算法的计算结果，将它与测试集的特征列组合形成算法的 **输出**：
 ```{r}
 output <- dat.test
 output$Survived <- nb.pred

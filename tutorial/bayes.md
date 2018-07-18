@@ -60,7 +60,7 @@ dim(titan.dat)
 
     ## [1] 2201    4
 
-上面的 data frame `titan.dat` 是本算法的**输入**，包含3个特征列 *Class*, *Sex* 和 *Age*，以及响应变量（也就是有监督学习中的“标签”）*Survived*。
+上面的 data frame `titan.dat` 是本算法的 ***输入***，包含3个特征列 *Class*, *Sex* 和 *Age*，以及响应变量（也就是有监督学习中的“标签”）*Survived*。
 
 下面取输入数据中 80% 的观测作为训练集，剩下 20% 作为测试集：
 
@@ -90,20 +90,20 @@ nb.model$tables
     ## $Class
     ##      Class
     ## Y            1st        2nd        3rd       Crew
-    ##   No  0.08305648 0.10963455 0.35215947 0.45514950
-    ##   Yes 0.29136691 0.16906475 0.26258993 0.27697842
+    ##   No  0.07932489 0.10970464 0.36118143 0.44978903
+    ##   Yes 0.27304348 0.16173913 0.25565217 0.30956522
     ## 
     ## $Sex
     ##      Sex
     ## Y           Male     Female
-    ##   No  0.91445183 0.08554817
-    ##   Yes 0.51618705 0.48381295
+    ##   No  0.91476793 0.08523207
+    ##   Yes 0.52347826 0.47652174
     ## 
     ## $Age
     ##      Age
     ## Y          Child      Adult
-    ##   No  0.03322259 0.96677741
-    ##   Yes 0.08812950 0.91187050
+    ##   No  0.03375527 0.96624473
+    ##   Yes 0.08173913 0.91826087
 
 训练数据表明女性和孩子的生存概率远高于男性和成人，一等舱到三等舱的生存概率依次下降，船员的生存概率最低。
 
@@ -114,7 +114,7 @@ nb.pred <- predict(nb.model, newdata = dat.test)
 nb.pred
 ```
 
-    ##   [1] No  No  No  No  No  No  No  No  Yes Yes Yes Yes No  No  No  No  No 
+    ##   [1] No  No  No  No  No  No  No  No  No  Yes Yes Yes No  No  No  No  No 
     ##  [18] No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No 
     ##  [35] No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No 
     ##  [52] No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No 
@@ -129,14 +129,14 @@ nb.pred
     ## [205] No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No 
     ## [222] No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No 
     ## [239] No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No 
-    ## [256] No  No  No  No  No  No  No  No  No  No  No  No  Yes Yes Yes Yes Yes
-    ## [273] Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes
-    ## [290] No  Yes Yes Yes Yes No  No  No  No  No  No  No  No  No  No  No  No 
-    ## [307] No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No 
+    ## [256] No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No 
+    ## [273] No  No  No  No  No  No  No  No  No  No  No  Yes Yes Yes Yes Yes Yes
+    ## [290] Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes
+    ## [307] No  No  Yes Yes Yes Yes Yes Yes Yes No  No  No  No  No  No  No  No 
     ## [324] No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No 
     ## [341] No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No 
-    ## [358] No  No  No  No  No  No  No  No  No  No  No  No  No  Yes Yes Yes Yes
-    ## [375] Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes
+    ## [358] No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No  No 
+    ## [375] No  No  No  No  Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes
     ## [392] Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes
     ## [409] Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes
     ## [426] Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes Yes
@@ -148,8 +148,8 @@ table(nb.pred, dat.test$Survived)
 
     ##        
     ## nb.pred  No Yes
-    ##     No  263  77
-    ##     Yes  23  78
+    ##     No  280  65
+    ##     Yes  25  71
 
 ``` r
 (59 + 19) / (286 + 59 + 19 + 77)
@@ -157,7 +157,7 @@ table(nb.pred, dat.test$Survived)
 
     ## [1] 0.1768707
 
-上面的向量 `nb.pred` 就是算法的计算结果，将它与测试集的特征列组合形成算法的**输出**：
+上面的向量 `nb.pred` 就是算法的计算结果，将它与测试集的特征列组合形成算法的 ***输出***：
 
 ``` r
 output <- dat.test
@@ -167,11 +167,11 @@ head(output)
 
     ##      Class  Sex   Age Survived
     ## 3      3rd Male Child       No
-    ## 3.5    3rd Male Child       No
-    ## 3.9    3rd Male Child       No
-    ## 3.19   3rd Male Child       No
-    ## 3.23   3rd Male Child       No
-    ## 3.26   3rd Male Child       No
+    ## 3.2    3rd Male Child       No
+    ## 3.3    3rd Male Child       No
+    ## 3.12   3rd Male Child       No
+    ## 3.15   3rd Male Child       No
+    ## 3.16   3rd Male Child       No
 
 与其他分类方法的比较
 --------------------
@@ -187,8 +187,8 @@ table(prediction = lr.pred, truth = dat.test$Survived)
 
     ##           truth
     ## prediction  No Yes
-    ##        No  263  80
-    ##        Yes  23  75
+    ##        No  280  65
+    ##        Yes  25  71
 
 与贝叶斯估计的泛化错误率一致。
 
@@ -209,8 +209,8 @@ table(prediction = lda.pred$class, truth = dat.test$Survived)
 
     ##           truth
     ## prediction  No Yes
-    ##        No  263  80
-    ##        Yes  23  75
+    ##        No  280  65
+    ##        Yes  25  71
 
 两个模型的泛化错误率都是 ![\\frac{59 + 19}{286 + 59 + 19 + 77} = 0.17689](https://latex.codecogs.com/png.latex?%5Cfrac%7B59%20%2B%2019%7D%7B286%20%2B%2059%20%2B%2019%20%2B%2077%7D%20%3D%200.17689 "\frac{59 + 19}{286 + 59 + 19 + 77} = 0.17689")。 说明在当前场景中，逻辑回归和LDA模型都可以给出理想的分类结果。
 

@@ -23,10 +23,10 @@ $$
 # 参数分析
 
 以1980年到1994年澳大利亚瓶装酒销售量为例说明利用MA方法去除季节和随即波动，估计长期趋势的方法。
-本例中**输入数据**的数量值和时序图如下：
+本例中 **输入数据** 的数量值和时序图如下：
 ```{r}
 library(forecast)
-wineind
+wineind       # 输入数据
 plot(wineind)
 ```
 
@@ -36,7 +36,7 @@ plot(wineind)
 下面是瓶装酒销售量以2个月、6个月和1年为阶数的计算结果对比：
 ```{r}
 plot(wineind)
-mas2 <- ma(wineind, order = 2)
+mas2 <- ma(wineind, order = 2)  # 根据输入数据和阶数计算MA值
 mas6 <- ma(wineind, order = 6)
 mas12 <- ma(wineind, order = 12)
 lines(mas2, col = 'red')
@@ -58,7 +58,7 @@ lines(mas12, col = 'blue')
 下面对比了不同的 *center* 设置下计算结果的差异：
 ```{r}
 plot(wineind)
-mas8 <- ma(wineind, order = 6, centre = FALSE)
+mas8 <- ma(wineind, order = 6, centre = FALSE)  # 根据输入数据、阶数和center参数计算MA值
 mas8c <- ma(wineind, order = 6, centre = TRUE)
 lines(mas8, col = 'red')
 lines(mas8c, col = 'blue')
