@@ -6,7 +6,7 @@
 -   [移动平均](#移动平均)
 -   [ARMA](#arma)
 -   [ARIMA](#arima)
--   [典型场景分析](#典型场景分析)
+-   [实例分析](#实例分析)
 -   [参考文献](#参考文献)
 
 稳态时间序列
@@ -25,7 +25,7 @@
 自回归
 ======
 
-如果时间序列变量 ![y](https://latex.codecogs.com/png.latex?y "y") 在 时间点 ![t](https://latex.codecogs.com/png.latex?t "t") 上的值是过去 ![p](https://latex.codecogs.com/png.latex?p "p") 个时间点上值的线性组合，则 ![y](https://latex.codecogs.com/png.latex?y "y") 是 ![p](https://latex.codecogs.com/png.latex?p "p") 阶自回归的：
+如果时间序列变量 ![y](https://latex.codecogs.com/png.latex?y "y") 在 时间点 ![t](https://latex.codecogs.com/png.latex?t "t") 上的值是过去 ![p](https://latex.codecogs.com/png.latex?p "p") 个时间点上值的线性组合，则 ![y](https://latex.codecogs.com/png.latex?y "y") 是 ![p](https://latex.codecogs.com/png.latex?p "p") 阶自回归（[autoregression](https://en.wikipedia.org/wiki/Autoregressive_model)）的：
 
 ![
 y\_t = \\delta + \\phi\_1 y\_{t-1} + \\phi\_2 y\_{t-2} + \\dots + \\phi\_p y\_{t-p} + \\epsilon\_t
@@ -78,17 +78,38 @@ ARIMA(p, d, q)
 
 当 ![p, d, q](https://latex.codecogs.com/png.latex?p%2C%20d%2C%20q "p, d, q") 确定后，将时间序列代入 式(1) 可确定模型参数。
 
-典型场景分析
-============
+实例分析
+========
 
-这里采用1871 ~ 1970年尼罗河水量作为输入数据创建ARIMA模型：
+这里采用1871 ~ 1970年尼罗河水量作为算法的 <u>**输入**</u> **数据**：
 
 ``` r
 library(forecast)
+Nile
+```
+
+    ## Time Series:
+    ## Start = 1871 
+    ## End = 1970 
+    ## Frequency = 1 
+    ##   [1] 1120 1160  963 1210 1160 1160  813 1230 1370 1140  995  935 1110  994
+    ##  [15] 1020  960 1180  799  958 1140 1100 1210 1150 1250 1260 1220 1030 1100
+    ##  [29]  774  840  874  694  940  833  701  916  692 1020 1050  969  831  726
+    ##  [43]  456  824  702 1120 1100  832  764  821  768  845  864  862  698  845
+    ##  [57]  744  796 1040  759  781  865  845  944  984  897  822 1010  771  676
+    ##  [71]  649  846  812  742  801 1040  860  874  848  890  744  749  838 1050
+    ##  [85]  918  986  797  923  975  815 1020  906  901 1170  912  746  919  718
+    ##  [99]  714  740
+
+``` r
 plot(Nile)
 ```
 
 ![](arima_files/figure-markdown_github/unnamed-chunk-1-1.png)
+
+可以看到输入是一个时间序列，起始时间 1871 年，结束时间 1970 年，序列中的每个数值代表当年的尼罗河水量。
+
+拟合ARIMA模型：
 
 ``` r
 mdl <- auto.arima(Nile)
@@ -118,7 +139,7 @@ summary(mdl)
 tsdisplay(residuals(mdl), lag.max=45, main='(1,1,1) Model Residuals')
 ```
 
-![](arima_files/figure-markdown_github/unnamed-chunk-2-1.png)
+![](arima_files/figure-markdown_github/unnamed-chunk-3-1.png)
 
 可以看到残差基本符合标准正态分布，满足 式(1) 中![\\epsilon](https://latex.codecogs.com/png.latex?%5Cepsilon "\epsilon")的要求。
 
@@ -142,11 +163,11 @@ predict(mdl, 5)
     ## Frequency = 1 
     ## [1] 142.0455 151.9673 155.2215 157.3709 159.2623
 
+可以看到算法的 **输出** 仍然是一个时间序列，起始时间为 1971 年，结束时间为 1975 年，序列的每个数值是当年尼罗河水量的预测值（*pred* 部分）以及标准差（*se* 部分）。
+
 参考文献
 ========
 
 -   <https://www.analyticsvidhya.com/blog/2015/12/complete-tutorial-time-series-modeling/>
 
 -   <https://rstudio-pubs-static.s3.amazonaws.com/345790_3c1459661736433382863ed19c30ea55.html>
-
--

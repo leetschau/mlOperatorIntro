@@ -1,0 +1,107 @@
+---
+title: "自回归算法介绍"
+output:
+  github_document:
+    pandoc_args: --webtex
+    html_preview: true
+    toc: true
+    toc_depth: 3
+---
+
+# 功能和使用场景
+
+如果时间序列变量 $y$ 在 时间点 $t$ 上的值是过去 $p$ 个时间点上值的线性组合，则 $y$ 是 $p$ 阶自回归（AR, [autoregression](https://en.wikipedia.org/wiki/Autoregressive_model)）的：
+$$
+y_t = \delta + \phi_1 y_{t-1} + \phi_2 y_{t-2} + \dots + \phi_p y_{t-p} + \epsilon_t \tag{1}
+$$
+
+其中 $\delta$ 可以理解为线性回归中的截距（intercept），$\epsilon_t$ 是随机扰动。
+
+使用AR预测时间序列时，要求该时间序列满足**稳态** (stationary) 条件，即：
+
+* 序列平均值不随时间变化；
+
+* 序列的方差 (variance) 不随时间变化；
+
+* 序列上距离相等的两组时间点上值的协方差 (covariance) 不随点的移动而变化；
+
+如果时间序列不满足稳态条件，可以使用（多次）差分的方法去掉序列中的低次项，再拟合AR模型。
+
+# 参数分析
+
+以1749年 ~ 1983年太阳黑子月度平均值为例，比较不同计算方法的预测精度。
+首先以1982年12月为界切分训练和测试集：
+```{r}
+dat.train <- window(sunspots, end = c(1982, 12))
+dat.test <- window(sunspots, start = c(1983, 1))
+head(dat.train)
+```
+
+可以看到本算法的 <u>**输入**</u> 是一个从1749年1月开始的时间序列。
+
+基于OLS（普通最小二乘法）方法拟合AR模型：
+```{r}
+arols <- ar(dat.train, method = 'ols', aic = TRUE)  # 使用 ar 函数拟合自回归模型
+arols$order
+arols$ar
+```
+
+
+这里 `arols$ar` 就是公式(1)中的系数向量 $\phi_1 \dots \phi_p$。
+
+在测试集上预测：
+```{r}
+pred.ols <- predict(arols, n.ahead = 12)   # 预测1983年（即1982年未来12个月）的月度太阳黑子数
+head(pred.ols$pred)
+```
+
+可以看到算法的 <u>**输出**</u> 也是一个时间序列。
+
+计算预测的平均绝对误差（MAE）：
+```{r}
+mean(abs(pred.ols$pred - dat.test))
+```
+
+用 yule-walker 方法拟合模型：
+```{r}
+aryule <- ar(dat.train, method = 'yule-walker', aic = TRUE)  # 使用 ar 函数拟合自回归模型
+aryule$order
+aryule$ar
+pred.yule <- predict(aryule, n.ahead = 12)   # 预测1983年（即1982年未来12个月）的月度太阳黑子数
+```
+
+计算预测的平均绝对误差（MAE）：
+```{r}
+mean(abs(pred.yule$pred - dat.test))
+```
+
+这是一个28阶自回归模型，预测精度略好于 OLS 方法。
+
+用 MLE 方法拟合模型并计算MAE：
+```{r}
+armle <- ar(dat.train, method = 'mle', aic = TRUE)
+armle$order
+armle$ar
+pred.mle <- predict(armle, n.ahead = 12)
+mean(abs(pred.mle$pred - dat.test))
+```
+
+这里 MLE 指 max likelihood estimation，即 [最大似然估计](https://zh.wikipedia.org/wiki/%E6%9C%80%E5%A4%A7%E4%BC%BC%E7%84%B6%E4%BC%B0%E8%AE%A1)，是一种参数估计方法，基于已有的样本，将产生这个样本概率最大的参数作为估计值。
+
+基于 MLE 的模型阶数降为12，但 MAE 也出现了显著的升高（20.34 vs 35.76），在复杂度和精度间如何取舍，要根据业务需求以及计算资源限制来决定。
+
+## 与 ARIMA 模型的比较
+
+```{r}
+library(forecast)
+arm.mdl <- auto.arima(dat.train)   # 使用自动确定系数的 arima 方法构建 ARIMA 模型
+summary(arm.mdl)
+pred.arm <- predict(arm.mdl, n.ahead = 12)
+```
+
+预测的MAE:
+```{r}
+mean(abs(pred.arm$pred - dat.test))
+```
+
+以 MAE 为评价指标，基于 OLS 的 AR 模型的预测精度高于 ARIMA模型（20.48 vs 36.26），但前者的模型复杂度显著高于后者（27 vs 2），也要通过业务需求和计算资源在复杂度和精度间做取舍。
