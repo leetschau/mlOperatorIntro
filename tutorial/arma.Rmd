@@ -1,0 +1,106 @@
+---
+title: "ARMA模型介绍"
+output:
+  github_document:
+    pandoc_args: --webtex
+    html_preview: true
+    toc: true
+    toc_depth: 3
+---
+
+# 功能和使用场景
+
+一个时间序列是*稳态*的 (stationary)，需要满足如下条件：
+
+* 序列平均值不随时间变化；
+
+* 序列的方差 (variance) 不随时间变化；
+
+* 序列上距离相等的两组时间点上值的协方差 (covariance) 不随点的移动而变化；
+
+满足$p$阶自回归和$q$阶移动平均的稳态时间序列可以表示为：
+$$
+y_t = \delta + \sum_{i=1}^p \phi_i y_{t-i} + \sum_{j=1}^q \theta_j \epsilon_{t-j} + \epsilon_t \tag{1}
+$$
+
+记为：
+$$
+ARMA(p, q)
+$$
+
+当 $p, q$ 确定后，将时间序列代入 式(1) 可确定模型参数。
+
+优点：比 AR 模型有更广泛的适用性;
+
+缺点：不能处理非稳态时间序列。
+
+# 参数分析
+
+以1749年 ~ 1983年太阳黑子月度平均值为例，比较不同计算方法的预测精度。
+首先以1982年12月为界切分训练和测试集：
+```{r}
+dat.train <- window(sunspots, end = c(1982, 12))
+dat.test <- window(sunspots, start = c(1983, 1))
+head(dat.train)
+```
+
+可以看到本算法的 **输入** 是一个从1749年1月开始的时间序列。
+
+## 生成稳态序列
+
+对于一个非稳态序列，可以通过不断进行差分的方法去掉信号中的低频成分，直到满足稳态条件为止，这个过程在R中的实现过程是：
+```{r}
+library(forecast)
+d <- ndiffs(dat.train); d
+```
+
+需要进行一次差分将训练集转为稳态数据：
+```{r}
+dat.tr.sta <- diff(dat.train, differences = 1)
+```
+
+## 自相关系数和移动平均系数
+
+显示时间序列，及其根据偏自相关 (PACF) 、自相关 (ACF) 图：
+```{r}
+tsdisplay(dat.tr.sta)
+```
+
+根据PACF图确定自回归系数 $p$，这里取2，根据ACF图确定移动平均系数 $q$ 为2。
+
+根据以上参数拟合ARMA模型：
+```{r}
+library(tseries)
+am.mdl <- arma(dat.tr.sta, order = c(2, 2))
+summary(am.mdl)
+```
+
+预测太阳黑子的在测试集上的月度数量：
+```{r}
+# forecast(am.mdl, 12)
+```
+
+
+随机变量 $y = \beta_0 + \beta_1 x_1 + \beta_2 x_2$，且 $x_1$ 与 $x_2$ 相关，则 $y$ 与 $x_1$ 的相关性中，去掉由于 $x_2$ 与 $y$、$x_1$ 都相关造成的 $y$ 与 $x_1$ 相关部分，剩下的相关性就是 $y$ 与 $x_1$ 的 *偏自相关系数*。
+
+## 与 ARIMA 对比
+
+```{r}
+library(forecast)
+arm.mdl <- auto.arima(dat.train)   # 使用自动确定系数的 arima 方法构建 ARIMA 模型
+summary(arm.mdl)
+pred.arm <- predict(arm.mdl, n.ahead = 12)
+```
+
+计算此模型的MAE:
+```{r}
+mean(abs(pred.arm$pred - dat.test))
+```
+
+# 参考文献
+
+* [Partial autocorrelation function](https://en.wikipedia.org/wiki/Partial_autocorrelation_function)
+
+* [Partial Autocorrelation Function in STAT 510](https://onlinecourses.science.psu.edu/stat510/node/62/)
+
+* [Identifying the numbers of AR or MA terms in an ARIMA model](https://people.duke.edu/~rnau/411arim3.htm)
