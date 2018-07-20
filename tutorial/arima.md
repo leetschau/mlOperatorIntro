@@ -1,16 +1,20 @@
 基于ARIMA的时间序列分析和预测
 ================
 
--   [稳态时间序列](#稳态时间序列)
--   [自回归](#自回归)
--   [移动平均](#移动平均)
--   [ARMA](#arma)
--   [ARIMA](#arima)
+-   [基本原理](#基本原理)
+    -   [稳态时间序列](#稳态时间序列)
+    -   [自回归](#自回归)
+    -   [移动平均](#移动平均)
+    -   [ARMA](#arma)
+    -   [ARIMA](#arima)
 -   [实例分析](#实例分析)
 -   [参考文献](#参考文献)
 
+基本原理
+========
+
 稳态时间序列
-============
+------------
 
 一个时间序列是*稳态*的 (stationary)，需要满足如下条件：
 
@@ -23,7 +27,7 @@
 稳态是预测时间序列的前提条件。
 
 自回归
-======
+------
 
 如果时间序列变量 ![y](https://latex.codecogs.com/png.latex?y "y") 在 时间点 ![t](https://latex.codecogs.com/png.latex?t "t") 上的值是过去 ![p](https://latex.codecogs.com/png.latex?p "p") 个时间点上值的线性组合，则 ![y](https://latex.codecogs.com/png.latex?y "y") 是 ![p](https://latex.codecogs.com/png.latex?p "p") 阶自回归（[autoregression](https://en.wikipedia.org/wiki/Autoregressive_model)）的：
 
@@ -36,7 +40,7 @@ y_t = \delta + \phi_1 y_{t-1} + \phi_2 y_{t-2} + \dots + \phi_p y_{t-p} + \epsil
 其中 ![\\delta](https://latex.codecogs.com/png.latex?%5Cdelta "\delta") 可以理解为线性回归中的截距（intercept），![\\epsilon\_t](https://latex.codecogs.com/png.latex?%5Cepsilon_t "\epsilon_t") 是随机扰动。
 
 移动平均
-========
+--------
 
 如果时间序列变量 ![y](https://latex.codecogs.com/png.latex?y "y") 在 时间点 ![t](https://latex.codecogs.com/png.latex?t "t") 上的值是当前以及过去 ![q](https://latex.codecogs.com/png.latex?q "q") 个时间点上随即扰动项的线性组合，则此时间序列是 ![q](https://latex.codecogs.com/png.latex?q "q") 阶移动平均的：
 
@@ -47,7 +51,7 @@ y_t = \mu + \theta_1 \epsilon_{t-1} + \theta_2 \epsilon_{t-2} + \dots + \theta_q
 ")
 
 ARMA
-====
+----
 
 满足![p](https://latex.codecogs.com/png.latex?p "p")阶自回归和![q](https://latex.codecogs.com/png.latex?q "q")阶移动平均的稳态时间序列可以表示为：
 
@@ -66,7 +70,7 @@ ARMA(p, q)
 ")
 
 ARIMA
-=====
+-----
 
 为了能够处理非稳态时间序列，采用差分 (difference) 处理非稳态序列，直到它符合稳态条件。 一个非稳态时间序列经过 ![d](https://latex.codecogs.com/png.latex?d "d") 次差分后变为 ![ARMA(p, q)](https://latex.codecogs.com/png.latex?ARMA%28p%2C%20q%29 "ARMA(p, q)")，则这个时间序列记为：
 
@@ -81,7 +85,7 @@ ARIMA(p, d, q)
 实例分析
 ========
 
-这里采用1871 ~ 1970年尼罗河水量作为算法的 <u>**输入**</u> **数据**：
+这里采用1871 ~ 1970年尼罗河水量作为算法的 <u>**输入**</u> 数据：
 
 ``` r
 library(forecast)
@@ -141,7 +145,7 @@ tsdisplay(residuals(mdl), lag.max=45, main='(1,1,1) Model Residuals')
 
 ![](arima_files/figure-markdown_github/unnamed-chunk-3-1.png)
 
-可以看到残差基本符合标准正态分布，满足 式(1) 中![\\epsilon](https://latex.codecogs.com/png.latex?%5Cepsilon "\epsilon")的要求。
+可以看到自相关（ACF）和偏自相关（PACF）系数都不显著，残差基本符合标准正态分布（白噪声），满足 式(1) 中![\\epsilon](https://latex.codecogs.com/png.latex?%5Cepsilon "\epsilon")的要求。
 
 基于上述参数可以预测未来5年（1971 ~ 1975）的尼罗河水量：
 
@@ -163,7 +167,7 @@ predict(mdl, 5)
     ## Frequency = 1 
     ## [1] 142.0455 151.9673 155.2215 157.3709 159.2623
 
-可以看到算法的 **输出** 仍然是一个时间序列，起始时间为 1971 年，结束时间为 1975 年，序列的每个数值是当年尼罗河水量的预测值（*pred* 部分）以及标准差（*se* 部分）。
+可以看到算法的 <u>**输出**</u> 仍然是一个时间序列，起始时间为 1971 年，结束时间为 1975 年，序列的每个数值是当年尼罗河水量的预测值（*pred* 部分）以及标准差（*se* 部分）。
 
 参考文献
 ========

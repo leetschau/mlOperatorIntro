@@ -31,6 +31,7 @@ $$
 输入数据是其中2201人的舱室等级、性别和年龄，响应变量为是否幸存：
 ```{r}
 library(e1071)
+set.seed(1)
 titan.df <- as.data.frame(Titanic)
 #Creating data from table
 repeating_sequence <- rep.int(seq_len(nrow(titan.df)), titan.df$Freq) #This will repeat each combination equal to the frequency of each combination
@@ -65,7 +66,7 @@ nb.model$tables
 nb.pred <- predict(nb.model, newdata = dat.test)
 nb.pred
 table(nb.pred, dat.test$Survived)
-(59 + 19) / (286 + 59 + 19 + 77)
+(24 + 69) / (255 + 69 + 24 + 93)
 ```
 
 上面的向量 `nb.pred` 就是算法的计算结果，将它与测试集的特征列组合形成算法的 **输出**：

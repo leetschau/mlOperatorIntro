@@ -198,7 +198,7 @@ summary(arm.mdl)
 pred.arm <- predict(arm.mdl, n.ahead = 12)
 ```
 
-预测的MAE:
+计算此模型的MAE:
 
 ``` r
 mean(abs(pred.arm$pred - dat.test))
