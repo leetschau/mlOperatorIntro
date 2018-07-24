@@ -90,3 +90,9 @@ M %*% q
 ```
 
 一次状态转换后状态向量的值不变，表明系统已进入稳态。
+
+# 参考文献
+
+* Section 4.9 "Applications to Markov Chains" of [Linear Algebra and Its Applications" 4th edition](https://www.pearson.com/us/higher-education/product/Lay-Linear-Algebra-and-Its-Applications-4th-Edition/9780321385178.html) by David C, Lay;
+
+* [Package limSolve, solving linear inverse models in R](https://cran.r-project.org/web/packages/limSolve/vignettes/limSolve.pdf);
