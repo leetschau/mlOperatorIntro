@@ -10,6 +10,14 @@ output:
 
 # 功能和使用场景
 
+使用场景：
+
+* 需要比较样本和总体，或者两个样本之间的数值型量是否有差异；
+
+* 总体方差未知；
+
+* 样本容量较小（< 30）；
+
 假设检验的原理和流程：
 
 1. 定义零假设和备择假设；
@@ -115,3 +123,8 @@ sum(pa < 0.05) / n
 * https://support.minitab.com/zh-cn/minitab/18/help-and-how-to/statistics/basic-statistics/supporting-topics/basics/what-is-a-test-statistic/
 
 * https://support.minitab.com/en-us/minitab-express/1/help-and-how-to/basic-statistics/inference/supporting-topics/basics/what-is-a-test-statistic/
+
+* https://statistics.berkeley.edu/computing/r-t-tests
+
+* https://support.minitab.com/en-us/minitab/18/help-and-how-to/statistics/basic-statistics/supporting-topics/basics/what-is-a-critical-value/
+
