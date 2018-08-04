@@ -28,10 +28,41 @@
 
 显著水平：这里取0.05；
 
-计算当前样本在卡方分布下出现的概率：
+导入数据并验证各特征下观测数：
 
 ``` r
 inp <- read.csv2('treatment.csv', sep = ',')
+head(inp)
+```
+
+    ##   id   treatment  improvement
+    ## 1  1     treated     improved
+    ## 2  2     treated     improved
+    ## 3  3 not-treated     improved
+    ## 4  4     treated     improved
+    ## 5  5     treated not-improved
+    ## 6  6     treated not-improved
+
+``` r
+dim(inp)    # 总观测数
+```
+
+    ## [1] 105   3
+
+``` r
+table(inp$treatment, inp$improvement)
+```
+
+    ##              
+    ##               improved not-improved
+    ##   not-treated       26           29
+    ##   treated           35           15
+
+可以看到，输入数据是一个包含105个病人的测试结果，以及控制组（`table()`函数输出的第一行）和药物组（第二行）中有效（第一列）和无效（第二列）的人数。
+
+使用卡方检验计算输入数据中，特征1：是否服用药物（inp数据集的 *treatment* 列）和特征2是否有效果（inp数据集的 *improvement* 列），这两个特征是否存在关联性：
+
+``` r
 chisq.test(inp$treatment, inp$improvement)
 ```
 
@@ -41,7 +72,7 @@ chisq.test(inp$treatment, inp$improvement)
     ## data:  inp$treatment and inp$improvement
     ## X-squared = 4.6626, df = 1, p-value = 0.03083
 
-p-value 小于0.05，所以拒绝零假设，即药物对康复有效果。
+p-value 小于0.05，拒绝零假设，即药物对康复有效果。
 
 与其他检验方法的关系
 ====================
