@@ -1,5 +1,5 @@
 ---
-title: "贝叶斯估计"
+title: "朴素贝叶斯分类"
 output:
   github_document:
     pandoc_args: --webtex
@@ -10,7 +10,7 @@ output:
 
 # 功能和使用场景
 
-贝叶斯估计基于 [贝叶斯定理](https://en.wikipedia.org/wiki/Bayes%27_theorem) 根据已有的先验概率（prior probability）计算出后验概率（posterior probability），并通过比较不同类型中后验概率的大小决定预测类别。在类别型特征彼此独立，或者数值型特征符合正态分布的条件下，贝叶斯估计可以得到理论上的最佳估计。
+朴素贝叶斯分类基于 [贝叶斯定理](https://en.wikipedia.org/wiki/Bayes%27_theorem) 根据已有的先验概率（prior probability）计算出后验概率（posterior probability），并通过比较不同类型中后验概率的大小决定预测类别。在类别型特征彼此独立，或者数值型特征符合正态分布的条件下，贝叶斯估计可以得到理论上的最佳估计。
 
 优点：适合特征为类型值、特征数量不太大、观察数量（可以）非常大的的分析场景，计算过程简单，扩展性好，易实现流式分析（一次训练只需要一个观测），解释性好；
 
@@ -27,7 +27,7 @@ $$
 
 # 实例分析
 
-使用贝叶斯估计预测泰坦尼克号乘客和船员是否能够幸存。
+使用朴素贝叶斯分类预测泰坦尼克号乘客和船员是否能够幸存。
 输入数据是其中2201人的舱室等级、性别和年龄，响应变量为是否幸存：
 ```{r}
 library(e1071)
@@ -52,7 +52,7 @@ dat.train <- titan.dat[train, ]
 dat.test <- titan.dat[-train, ]
 ```
 
-基于训练集建立贝叶斯估计模型：
+基于训练集建立朴素贝叶斯分类模型：
 ```{r}
 nb.model <- naiveBayes(Survived ~., data = dat.train)  # 基于输入数据 dat.train 和 公式建立贝叶斯模型
 summary(nb.model)
@@ -87,7 +87,7 @@ lr.pred <- ifelse(lr.prob > 0.5, 'Yes', 'No')
 table(prediction = lr.pred, truth = dat.test$Survived)
 ```
 
-与贝叶斯估计的泛化错误率一致。
+与贝叶斯分类的泛化错误率一致。
 
 使用LDA模型的泛化错误率：
 ```{r}

@@ -4,12 +4,21 @@ t检验方法介绍
 -   [功能和使用场景](#功能和使用场景)
     -   [检验统计量](#检验统计量)
     -   [判定方法](#判定方法)
+    -   [计算公式](#计算公式)
 -   [实例分析](#实例分析)
 -   [参数分析](#参数分析)
 -   [参考文献](#参考文献)
 
 功能和使用场景
 ==============
+
+使用场景：
+
+-   需要比较样本和总体，或者两个样本之间的数值型量是否有差异；
+
+-   总体方差未知；
+
+-   样本容量较小（&lt; 30）；
 
 假设检验的原理和流程：
 
@@ -85,6 +94,37 @@ pt(1.676, df = 50)
 
     ## [1] 0.9500094
 
+计算公式
+--------
+
+单样本t检验计算公式：
+
+![
+t = \\frac{\\bar x - \\mu\_0}{\\frac{s}{\\sqrt n}}
+](https://latex.codecogs.com/png.latex?%0At%20%3D%20%5Cfrac%7B%5Cbar%20x%20-%20%5Cmu_0%7D%7B%5Cfrac%7Bs%7D%7B%5Csqrt%20n%7D%7D%0A "
+t = \frac{\bar x - \mu_0}{\frac{s}{\sqrt n}}
+")
+
+其中，![\\bar x](https://latex.codecogs.com/png.latex?%5Cbar%20x "\bar x") 是样本均值，![\\mu\_0](https://latex.codecogs.com/png.latex?%5Cmu_0 "\mu_0") 是总体均值，![s](https://latex.codecogs.com/png.latex?s "s") 是样本方差， ![n](https://latex.codecogs.com/png.latex?n "n") 是样本容量。
+
+双样本t检验计算公式：
+
+![
+t = \\frac{\\bar X\_1 - \\bar X\_2}{s\_p \\sqrt \\frac 2n}
+](https://latex.codecogs.com/png.latex?%0At%20%3D%20%5Cfrac%7B%5Cbar%20X_1%20-%20%5Cbar%20X_2%7D%7Bs_p%20%5Csqrt%20%5Cfrac%202n%7D%0A "
+t = \frac{\bar X_1 - \bar X_2}{s_p \sqrt \frac 2n}
+")
+
+其中：
+
+![
+s\_p = \\sqrt \\frac{s\_1^2 + s\_2^2}2
+](https://latex.codecogs.com/png.latex?%0As_p%20%3D%20%5Csqrt%20%5Cfrac%7Bs_1%5E2%20%2B%20s_2%5E2%7D2%0A "
+s_p = \sqrt \frac{s_1^2 + s_2^2}2
+")
+
+以上 ![\\bar X\_1, \\; \\bar X\_2](https://latex.codecogs.com/png.latex?%5Cbar%20X_1%2C%20%5C%3B%20%5Cbar%20X_2 "\bar X_1, \; \bar X_2") 是两个样本均值，![s\_1, \\; s\_2](https://latex.codecogs.com/png.latex?s_1%2C%20%5C%3B%20s_2 "s_1, \; s_2") 是两个样本方差，![n](https://latex.codecogs.com/png.latex?n "n") 是样本容量。
+
 实例分析
 ========
 
@@ -116,7 +156,7 @@ p-value 大于 0.05，所以无法拒绝零假设（两个总体均值相等）�
 将B总体改为均值为1，方差为1的正态分布，样本空间不变，再次比较两个总体均值是否相等。
 
 ``` r
-y2 <- rnorm(10, mean = 1)
+y2 <- rnorm(10, mean = 2)
 t.test(x, y2)
 ```
 
@@ -124,13 +164,13 @@ t.test(x, y2)
     ##  Welch Two Sample t-test
     ## 
     ## data:  x and y2
-    ## t = -1.8814, df = 17.31, p-value = 0.07684
+    ## t = -4.4443, df = 17.31, p-value = 0.0003416
     ## alternative hypothesis: true difference in means is not equal to 0
     ## 95 percent confidence interval:
-    ##  -1.55623458  0.08798663
+    ##  -2.5562346 -0.9120134
     ## sample estimates:
     ## mean of x mean of y 
-    ## 0.1322028 0.8663268
+    ## 0.1322028 1.8663268
 
 p-value 小于 0.05，所以拒绝零假设，两个总体均值不相等。
 
@@ -187,3 +227,7 @@ sum(pa < 0.05) / n
 -   <https://support.minitab.com/zh-cn/minitab/18/help-and-how-to/statistics/basic-statistics/supporting-topics/basics/what-is-a-test-statistic/>
 
 -   <https://support.minitab.com/en-us/minitab-express/1/help-and-how-to/basic-statistics/inference/supporting-topics/basics/what-is-a-test-statistic/>
+
+-   <https://statistics.berkeley.edu/computing/r-t-tests>
+
+-   <https://support.minitab.com/en-us/minitab/18/help-and-how-to/statistics/basic-statistics/supporting-topics/basics/what-is-a-critical-value/>
