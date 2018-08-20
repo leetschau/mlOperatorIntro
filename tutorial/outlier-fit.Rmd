@@ -1,0 +1,54 @@
+---
+title: "基于拟合的异常值检测方法"
+output: html_notebook
+---
+
+# 功能和使用场景
+
+什么是studentized residual，
+以绝对值3为边界。
+
+# 参数分析
+
+# 实例分析
+
+生成正常数据 $y = 1 + 2x$：
+```{r}
+set.seed(1)
+x <- runif(100, -2, 2)
+y <- 1 + 2 * x + rnorm(100)
+plot(x, y)
+```
+
+增加两个异常值：
+```{r}
+xa <- c(x, -1, 1)
+ya <- c(y, 4, -4)
+plot(x, y)
+points(xa[101], ya[101], col = 'red')
+points(xa[102], ya[102], col = 'red')
+```
+
+构造线性拟合模型，对比实际值（数据点）和预测值（蓝色线）：
+```{r}
+mdl <- lm(ya ~ xa)
+summary(mdl)  # 输出拟合系数
+y.pred <- predict(mdl)
+plot(xa, ya)
+lines(xa, y.pred, type = 'l', col = 'blue')
+```
+
+可以看到拟合系数 $\beta_0 = 0.96$（实际值1），$\beta_1 = 1.97$（实际值2），都有比较好的精度。
+
+使用 [studentized residual](https://en.wikipedia.org/wiki/Studentized_residual) 分析异常点：
+```{r}
+rst <- rstudent(mdl)
+rst[abs(rst) > 3]
+plot(y.pred, rst)
+points(y.pred[101], rst[101], col = 'red', cex = 2, pch = 3)
+points(y.pred[102], rst[102], col = 'red', cex = 2, pch = 3)
+```
+
+可知studentized residual绝对值大于3的观测点包括第101, 102两个点，与实际情况吻合。
+
+# 参考文献
