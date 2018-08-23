@@ -1,3 +1,4 @@
 *.html
 rsconnect/
 .Rhistory
+.Rproj.user
