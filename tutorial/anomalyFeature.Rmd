@@ -1,0 +1,98 @@
+---
+title: "特征异常平滑"
+output:
+  github_document:
+    pandoc_args: --webtex
+    html_preview: true
+    toc: true
+    toc_depth: 3
+---
+
+# 功能和使用场景
+
+## 特征异常因子
+
+特征异常 (high leverage) 指特征变量（独立变量）由于某些原因，例如仪器输出异常、录入错误等，取到了不合理的值。
+从数值计算的角度看，异常特征值就是与该特征的平均值的差距超出了合理范围的值，实践中以与特征平均值的距离作为特征异常的衡量指标，距离越远，属于异常值的可能性就越高（ISL，式(3.37)）：
+$$
+h_i = \frac1n + \frac{(x_i - \bar x) ^ 2}{\sum_{j=1}^n(x_j - \bar x) ^ 2}
+$$
+
+当 $x_i \to \bar x$ 时，$h_i \to \frac1n$；
+
+当$x_i$ 与 特征平均值 $\bar x$ 的差距较大时，$x_i$ 对应的误差，$(x_i - \bar x) ^ 2$，在误差总和，$\sum_{j=1}^n(x_j - \bar x) ^ 2$ 所占比重很大，$h_i \to 1$，证明过程如下：
+假设特征 $X$ 包含 $n$ 个观测，其中 $n - 1$ 个正常值取值均为 $x_1$，另有一个异常值 $x_2$，也就是说 $x_2$ 对应的观测贡献了所有的误差。这时特征均值为：
+$$
+\bar x = \frac{(n - 1) x_1 + x_2}{n}
+$$
+
+则正常项（共 $n - 1$ 个）与均值的方差为（令 $S = (x_2 - x_1) ^ 2$）：
+$$
+\sigma_n = (x_1 - \bar x) ^ 2 = (\frac{x_1 - x_2}{n}) ^ 2 = \frac{1}{n ^ 2} S
+$$
+
+异常值与均值的方差为：
+$$
+\sigma_a = (x_2 - \bar x) ^ 2 = (\frac{n - 1}{n} (x_2 - x_1)) ^ 2 = \frac{(n - 1) ^ 2}{n ^ 2} S
+$$
+
+异常观测的 $h$ 值为：
+$$
+h_a = \frac1n + \frac{\sigma_a}{(n - 1) \sigma_n + \sigma_a} \\
+= \frac1n + \frac{\frac{(n - 1) ^ 2}{n ^ 2} S}{\frac{n - 1}{n ^ 2} S + \frac{(n - 1) ^ 2}{n ^ 2} S} \\
+= \frac1n + \frac{(n - 1) ^ 2}{n - 1 + (n - 1) ^ 2} \\
+= 1
+$$
+
+正常观测的 $h$ 值为：
+$$
+h_n = \frac1n + \frac{\sigma_n}{(n - 1) \sigma_n + \sigma_a} \\
+= \frac1n + \frac{\frac{1}{n ^ 2} S}{\frac{n - 1}{n ^ 2} S + \frac{(n - 1) ^ 2}{n ^ 2} S} \\
+= \frac1n + \frac{1}{n - 1 + (n - 1) ^ 2} \\
+= \frac1{n - 1}
+$$
+
+故可知异常特征值的 $h$ 值大于正常值的 $h$ 值，且随着观测数量的增加，差异不断升高，当 $n \to \infty$ 时，二者之差 $\to 1$。
+
+## 特征异常的判定规则
+
+由于所有观测点的 $h$ 值的平均值为 $(p + 1) / n$（这里 $p$ 为模型中特征的数量，参考 ISL p98），一般取 $(p + 1) / n$ 的倍数作为判断特征异常的阈值，超过这个值视为特征异常值。
+
+异常特征虽然往往是由于错误导致的，但并不必然导致拟合错误，以单变量拟合为例，假设有数据集 $y = 3 x + 1, \; x \in [1, 2]$，对于观测点 $(3, 10)$，虽然特征 $3 \notin [1,2]$，属于异常点，但并不影响拟合函数（$\because 10 = 3 \times 3 + 1$）。
+
+# 参数分析
+
+异常系数 $k$ 通常取2或者3（参考 [Using Leverages to Help Identify Extreme x Values](https://onlinecourses.science.psu.edu/stat501/node/338/)）。
+
+算子的 **输入** 是一个 dataframe，**输出** 是去掉异常点后的dataframe.
+
+# 实例分析
+
+算子的 ** 输入** 是1974年 "Moter Trend US" 杂志选取的32款车型11个方面的性能指标形成的 `mtcars` 数据集：
+```{r}
+dim(mtcars)
+rownames(mtcars)
+```
+
+下面选取其中 汽缸数 和 百英里油耗 两个特征，**参数** 取 $k = 2$，通过 $h$ 值分析其中的特征异常值：
+```{r}
+mdl <- lm(hp ~ cyl + mpg, data = mtcars)
+k <- 2
+h.max <- k * (2 + 1) / nrow(mtcars)   # 2表示模型中包含2个特征变量: cyl 和 mpg
+lev <- hatvalues(mdl)      # 计算数据集中每个观测的h值
+plot(lev, type = 'h')
+abline(h = h.max, col = 'red', lty = 2)
+```
+
+筛选出 leverage 超出阈值的观测点：
+```{r}
+rownames(mtcars[lev > h.max, ])
+```
+
+去掉 leverage 超出阈值的观测点，形成算子的 **输出**：
+```{r}
+newcar <- mtcars[lev <= h.max, ]
+dim(newcar)
+rownames(newcar)
+```
+
