@@ -4,6 +4,8 @@
 -   [二项分布](#二项分布)
 -   [似然函数](#似然函数)
 -   [功能和使用场景](#功能和使用场景)
+    -   [二项分布场景](#二项分布场景)
+    -   [正态分布场景](#正态分布场景)
 -   [实例分析](#实例分析)
 -   [参考文献](#参考文献)
 
@@ -183,7 +185,20 @@ Posterior \propto Likelihood \times Prior
 
 -   正态分布（数据、似然函数） - 正态分布（先验、后验概率）；
 
-对于二项分布，先验分布 ![beta(\\alpha, \\beta)](https://latex.codecogs.com/png.latex?beta%28%5Calpha%2C%20%5Cbeta%29 "beta(\alpha, \beta)") 的概率质量函数是：
+贝叶斯估计的特点：
+
+1.  如果先验概率是均匀分布，则后验概率主要由数据决定；
+
+2.  如果先验概率中包含了较多的信息，则后验概率由先验概率和数据共同确定；
+
+3.  先验概率中包含的信息越多，就需要更多的数据才能使后验概率区别于先验概率；
+
+4.  数据量越大，后验概率中数据的影响越大，先验概率的影响越小。
+
+二项分布场景
+------------
+
+对于观测数据符合二项分布的场景，先验分布 ![beta(\\alpha, \\beta)](https://latex.codecogs.com/png.latex?beta%28%5Calpha%2C%20%5Cbeta%29 "beta(\alpha, \beta)") 的概率质量函数是：
 
 ![
 Prior = p^{\\alpha - 1} (1 - p) ^ {\\beta -1}
@@ -215,15 +230,22 @@ Posterior = p ^ {\alpha + x -1} (1 - p) ^ {\beta + n - x - 1}
 
 E\_{posterior}\[beta(+ z, + n - z)\] = = $$
 
-贝叶斯估计的特点：
+正态分布场景
+------------
 
-1.  如果先验概率是均匀分布，则后验概率主要由数据决定；
+对于观测数据符合正态分布的场景，可以从观测数据中计算出样本均值 ![\\mu](https://latex.codecogs.com/png.latex?%5Cmu "\mu") 和 方差 ![\\sigma](https://latex.codecogs.com/png.latex?%5Csigma "\sigma")，已知先验概率符合正态分布 ![N(\\mu\_0, \\sigma\_0 ^ 2)](https://latex.codecogs.com/png.latex?N%28%5Cmu_0%2C%20%5Csigma_0%20%5E%202%29 "N(\mu_0, \sigma_0 ^ 2)")，则后验概率符合如下正态分布：
 
-2.  如果先验概率中包含了较多的信息，则后验概率由先验概率和数据共同确定；
-
-3.  先验概率中包含的信息越多，就需要更多的数据才能使后验概率区别于先验概率；
-
-4.  数据量越大，后验概率中数据的影响越大，先验概率的影响越小。
+![
+N(
+  \\frac1{\\frac1{\\sigma\_0^2} + \\frac n{\\sigma ^ 2}}
+    (\\frac{\\mu\_0}{\\sigma\_0^2} + \\frac{\\sum\_{i=1}^n x\_i}{\\sigma ^ 2}),
+  \\frac1{\\frac1{\\sigma\_0^2} + \\frac n{\\sigma ^ 2}})
+](https://latex.codecogs.com/png.latex?%0AN%28%0A%20%20%5Cfrac1%7B%5Cfrac1%7B%5Csigma_0%5E2%7D%20%2B%20%5Cfrac%20n%7B%5Csigma%20%5E%202%7D%7D%0A%20%20%20%20%28%5Cfrac%7B%5Cmu_0%7D%7B%5Csigma_0%5E2%7D%20%2B%20%5Cfrac%7B%5Csum_%7Bi%3D1%7D%5En%20x_i%7D%7B%5Csigma%20%5E%202%7D%29%2C%0A%20%20%5Cfrac1%7B%5Cfrac1%7B%5Csigma_0%5E2%7D%20%2B%20%5Cfrac%20n%7B%5Csigma%20%5E%202%7D%7D%29%0A "
+N(
+  \frac1{\frac1{\sigma_0^2} + \frac n{\sigma ^ 2}}
+    (\frac{\mu_0}{\sigma_0^2} + \frac{\sum_{i=1}^n x_i}{\sigma ^ 2}),
+  \frac1{\frac1{\sigma_0^2} + \frac n{\sigma ^ 2}})
+")
 
 实例分析
 ========
@@ -429,3 +451,5 @@ plot.beta(4,9,58,100,ymax=10,main="Beta(4,9) to Beta(62,51)")
 -   [Bayesian Estimation](https://rstudio-pubs-static.s3.amazonaws.com/91970_901d926809c14096b5146e67f21c764d.html)
 
 -   [R Scripts for Bayesian Computation with R, Second Edition](http://personal.bgsu.edu/~albert/R.Scripts/index.html)
+
+-   [Conjugate prior](https://en.wikipedia.org/wiki/Conjugate_prior#Discrete_distributions)
