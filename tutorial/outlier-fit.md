@@ -4,6 +4,7 @@
 -   [功能和使用场景](#功能和使用场景)
 -   [参数分析](#参数分析)
 -   [实例分析](#实例分析)
+    -   [二次型异常检测](#二次型异常检测)
 
 功能和使用场景
 ==============
@@ -138,3 +139,58 @@ summary(mdl2)
     ## F-statistic: 553.1 on 1 and 98 DF,  p-value: < 2.2e-16
 
 可以看到去掉异常点后，残差最大值从5.01下降到了2.52，而模型系数变化很小（0.96 vs 0.98，1.97 vs 2.07）， 符合前面对异常点的定义。
+
+二次型异常检测
+--------------
+
+试验数据包含两个特征和一个响应值：
+
+``` r
+set.seed(1)
+x1 <- runif(100, 2, 5)
+x2 <- runif(100, 12, 28)
+yraw <- 21.22 + 5.22 * x1 * x2 + 3.44 * x1 * x1 + 9.28 * x2 * x2
+y <- jitter(yraw, factor = 3)
+```
+
+按二次型形式拟合模型：
+
+``` r
+mdl <- lm(y ~ I(x1 ^ 2) + I(x2 ^ 2) + I(x1 * x2))
+summary(mdl)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = y ~ I(x1^2) + I(x2^2) + I(x1 * x2))
+    ## 
+    ## Residuals:
+    ##      Min       1Q   Median       3Q      Max 
+    ## -0.54307 -0.24689 -0.08544  0.27594  0.70628 
+    ## 
+    ## Coefficients:
+    ##              Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept) 2.096e+01  1.207e-01   173.7   <2e-16 ***
+    ## I(x1^2)     3.494e+00  2.524e-02   138.4   <2e-16 ***
+    ## I(x2^2)     9.281e+00  8.211e-04 11303.6   <2e-16 ***
+    ## I(x1 * x2)  5.204e+00  8.732e-03   595.9   <2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.3302 on 96 degrees of freedom
+    ## Multiple R-squared:      1,  Adjusted R-squared:      1 
+    ## F-statistic: 9.118e+08 on 3 and 96 DF,  p-value: < 2.2e-16
+
+可以看到拟合参数与理论值基本吻合。
+
+计算预测值的 studentized residuals，这里将异常值阈值设为3：
+
+``` r
+library(MASS)
+sr <- studres(mdl)
+sum(abs(sr) > 3)
+```
+
+    ## [1] 0
+
+计算结果显示没有异常值，与数据实际情况吻合。
