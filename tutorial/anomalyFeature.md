@@ -8,7 +8,7 @@
 -   [实例分析](#实例分析)
 -   [算子实现方案](#算子实现方案)
     -   [基于 R 函数](#基于-r-函数)
-    -   [自己实现](#自己实现)
+    -   [Java/Scala实现](#javascala实现)
 
 功能和使用场景
 ==============
@@ -20,6 +20,24 @@
 ](https://latex.codecogs.com/png.latex?%0A%5Chat%20Y%20%3D%20H%20Y%0A "
 \hat Y = H Y
 ")
+
+将这个等式在行方向上展开：
+
+![
+\\hat y\_i = h\_{i1} y\_1 + h\_{i2} y\_2 + \\cdots + h\_{ii} y\_i + \\cdots + h\_{in} y\_n
+](https://latex.codecogs.com/png.latex?%0A%5Chat%20y_i%20%3D%20h_%7Bi1%7D%20y_1%20%2B%20h_%7Bi2%7D%20y_2%20%2B%20%5Ccdots%20%2B%20h_%7Bii%7D%20y_i%20%2B%20%5Ccdots%20%2B%20h_%7Bin%7D%20y_n%0A "
+\hat y_i = h_{i1} y_1 + h_{i2} y_2 + \cdots + h_{ii} y_i + \cdots + h_{in} y_n
+")
+
+ 可知其中的 ![h\_{ii}](https://latex.codecogs.com/png.latex?h_%7Bii%7D "h_{ii}") 项表征了第 ![i](https://latex.codecogs.com/png.latex?i "i") 个观测中实际值 ![y\_i](https://latex.codecogs.com/png.latex?y_i "y_i") 对估计值 ![\\hat y\_i](https://latex.codecogs.com/png.latex?%5Chat%20y_i "\hat y_i") 的贡献大小。 由 ![h\_{ii}](https://latex.codecogs.com/png.latex?h_%7Bii%7D "h_{ii}") 组成的向量具有如下性质（[Using Leverages to Help Identify Extreme x Values](https://onlinecourses.science.psu.edu/stat501/node/338/)）：
+
+-   ![h\_{ii}](https://latex.codecogs.com/png.latex?h_%7Bii%7D "h_{ii}") 表示第 ![i](https://latex.codecogs.com/png.latex?i "i") 个观测值 ![x\_i](https://latex.codecogs.com/png.latex?x_i "x_i") 与平均值 ![\\bar x](https://latex.codecogs.com/png.latex?%5Cbar%20x "\bar x") 差距的大小；
+
+-   ![h\_{ii} \\in \[0, 1\]](https://latex.codecogs.com/png.latex?h_%7Bii%7D%20%5Cin%20%5B0%2C%201%5D "h_{ii} \in [0, 1]")
+
+-   ![\\sum\_{i = 1}^n h\_{ii} = p](https://latex.codecogs.com/png.latex?%5Csum_%7Bi%20%3D%201%7D%5En%20h_%7Bii%7D%20%3D%20p "\sum_{i = 1}^n h_{ii} = p")
+
+其中 ![p](https://latex.codecogs.com/png.latex?p "p") 是特征数。
 
 特征异常因子
 ------------
@@ -184,10 +202,10 @@ rownames(newcar)
 
 如上 实例分析 一节所示，R 中的 `hatvalues()` 函数用于计算特征异常因子 ![h](https://latex.codecogs.com/png.latex?h "h")，超出 ![k (p + 1) / n](https://latex.codecogs.com/png.latex?k%20%28p%20%2B%201%29%20%2F%20n "k (p + 1) / n") 的 ![h](https://latex.codecogs.com/png.latex?h "h") 值被标记为特征异常值（这里 ![k](https://latex.codecogs.com/png.latex?k "k") 是用户指定的阈值因子，![p](https://latex.codecogs.com/png.latex?p "p") 是模型特征数，![n](https://latex.codecogs.com/png.latex?n "n") 是模型观测数）。
 
-自己实现
---------
+Java/Scala实现
+--------------
 
-如果不引入 R，可参考 `hatvalues()` 的实现手工转换为 Scala/Java 实现，由于 `hatvalues()` 是 `lm.lm.influence()` 函数返回结果中 `hat` 部分的别名，其实现如下：
+如果不引入 R，可参考 `hatvalues()` 的实现手工转换为 Java/Scala 实现，由于 `hatvalues()` 是 `lm.lm.influence()` 函数返回结果中 `hat` 部分的别名，其实现如下：
 
 ``` r
 getAnywhere(lm.influence)
@@ -243,5 +261,5 @@ getAnywhere(lm.influence)
     ##     }
     ##     res
     ## }
-    ## <bytecode: 0x25805a0>
+    ## <bytecode: 0x2048728>
     ## <environment: namespace:stats>

@@ -15,6 +15,21 @@ $$
 \hat Y = H Y
 $$
 
+将这个等式在行方向上展开：
+$$
+\hat y_i = h_{i1} y_1 + h_{i2} y_2 + \cdots + h_{ii} y_i + \cdots + h_{in} y_n
+$$
+可知其中的 $h_{ii}$ 项表征了第 $i$ 个观测中实际值 $y_i$ 对估计值 $\hat y_i$ 的贡献大小。
+由 $h_{ii}$ 组成的向量具有如下性质（[Using Leverages to Help Identify Extreme x Values](https://onlinecourses.science.psu.edu/stat501/node/338/)）：
+
+* $h_{ii}$ 表示第 $i$ 个观测值 $x_i$ 与平均值 $\bar x$ 差距的大小；
+
+* $h_{ii} \in [0, 1]$
+
+* $\sum_{i = 1}^n h_{ii} = p$
+
+其中 $p$ 是特征数。
+
 ## 特征异常因子
 
 特征异常 (high leverage) 指特征变量（独立变量）由于某些原因，例如仪器输出异常、录入错误等，取到了不合理的值。
@@ -109,9 +124,9 @@ rownames(newcar)
 
 如上 实例分析 一节所示，R 中的 `hatvalues()` 函数用于计算特征异常因子 $h$，超出 $k (p + 1) / n$ 的 $h$ 值被标记为特征异常值（这里 $k$ 是用户指定的阈值因子，$p$ 是模型特征数，$n$ 是模型观测数）。
 
-## 自己实现
+## Java/Scala实现
 
-如果不引入 R，可参考 `hatvalues()` 的实现手工转换为 Scala/Java 实现，由于 `hatvalues()` 是 `lm.lm.influence()` 函数返回结果中 `hat` 部分的别名，其实现如下：
+如果不引入 R，可参考 `hatvalues()` 的实现手工转换为 Java/Scala 实现，由于 `hatvalues()` 是 `lm.lm.influence()` 函数返回结果中 `hat` 部分的别名，其实现如下：
 ```{r}
 getAnywhere(lm.influence)
 ```
