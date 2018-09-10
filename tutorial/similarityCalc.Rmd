@@ -1,6 +1,11 @@
 ---
-title: "相似度计算方法介绍"
-output: html_notebook
+title: "相似度计算与排序介绍"
+output:
+  github_document:
+    pandoc_args: --webtex
+    html_preview: true
+    toc: true
+    toc_depth: 3
 ---
 
 # 功能和使用场景

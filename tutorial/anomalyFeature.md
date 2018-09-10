@@ -6,9 +6,20 @@
     -   [特征异常的判定规则](#特征异常的判定规则)
 -   [参数分析](#参数分析)
 -   [实例分析](#实例分析)
+-   [算子实现方案](#算子实现方案)
+    -   [基于 R 函数](#基于-r-函数)
+    -   [自己实现](#自己实现)
 
 功能和使用场景
 ==============
+
+对于有监督学习问题，当观测数为 ![n](https://latex.codecogs.com/png.latex?n "n") 时，有观测值向量 ![Y](https://latex.codecogs.com/png.latex?Y "Y") （长度为 ![n](https://latex.codecogs.com/png.latex?n "n")）和拟合值向量 ![\\hat Y](https://latex.codecogs.com/png.latex?%5Chat%20Y "\hat Y")，则满足如下特征的矩阵 ![H](https://latex.codecogs.com/png.latex?H "H") 叫做 hat matrix （因为方程左边变量叫 *hat y*）:
+
+![
+\\hat Y = H Y
+](https://latex.codecogs.com/png.latex?%0A%5Chat%20Y%20%3D%20H%20Y%0A "
+\hat Y = H Y
+")
 
 特征异常因子
 ------------
@@ -162,3 +173,75 @@ rownames(newcar)
     ## [22] "Camaro Z28"          "Pontiac Firebird"    "Fiat X1-9"          
     ## [25] "Porsche 914-2"       "Lotus Europa"        "Ford Pantera L"     
     ## [28] "Ferrari Dino"        "Maserati Bora"       "Volvo 142E"
+
+在多特征回归模型中（特征数量大于1），特征异常不针对某个具体的特征，而是所有特征综合作用的结果。
+
+算子实现方案
+============
+
+基于 R 函数
+-----------
+
+如上 实例分析 一节所示，R 中的 `hatvalues()` 函数用于计算特征异常因子 ![h](https://latex.codecogs.com/png.latex?h "h")，超出 ![k (p + 1) / n](https://latex.codecogs.com/png.latex?k%20%28p%20%2B%201%29%20%2F%20n "k (p + 1) / n") 的 ![h](https://latex.codecogs.com/png.latex?h "h") 值被标记为特征异常值（这里 ![k](https://latex.codecogs.com/png.latex?k "k") 是用户指定的阈值因子，![p](https://latex.codecogs.com/png.latex?p "p") 是模型特征数，![n](https://latex.codecogs.com/png.latex?n "n") 是模型观测数）。
+
+自己实现
+--------
+
+如果不引入 R，可参考 `hatvalues()` 的实现手工转换为 Scala/Java 实现，由于 `hatvalues()` 是 `lm.lm.influence()` 函数返回结果中 `hat` 部分的别名，其实现如下：
+
+``` r
+getAnywhere(lm.influence)
+```
+
+    ## A single object matching 'lm.influence' was found
+    ## It was found in the following places
+    ##   package:stats
+    ##   namespace:stats
+    ## with value
+    ## 
+    ## function (model, do.coef = TRUE) 
+    ## {
+    ##     wt.res <- weighted.residuals(model)
+    ##     e <- na.omit(wt.res)
+    ##     if (model$rank == 0) {
+    ##         n <- length(wt.res)
+    ##         sigma <- sqrt(deviance(model)/df.residual(model))
+    ##         res <- list(hat = rep(0, n), coefficients = matrix(0, 
+    ##             n, 0), sigma = rep(sigma, n), wt.res = e)
+    ##     }
+    ##     else {
+    ##         e[abs(e) < 100 * .Machine$double.eps * median(abs(e))] <- 0
+    ##         mqr <- qr.lm(model)
+    ##         n <- as.integer(nrow(mqr$qr))
+    ##         if (is.na(n)) 
+    ##             stop("invalid model QR matrix")
+    ##         if (NROW(e) != n) 
+    ##             stop("non-NA residual length does not match cases used in fitting")
+    ##         do.coef <- as.logical(do.coef)
+    ##         tol <- 10 * .Machine$double.eps
+    ##         res <- .Call(C_influence, mqr, do.coef, e, tol)
+    ##         if (!is.null(model$na.action)) {
+    ##             hat <- naresid(model$na.action, res$hat)
+    ##             hat[is.na(hat)] <- 0
+    ##             res$hat <- hat
+    ##             if (do.coef) {
+    ##                 coefficients <- naresid(model$na.action, res$coefficients)
+    ##                 coefficients[is.na(coefficients)] <- 0
+    ##                 res$coefficients <- coefficients
+    ##             }
+    ##             sigma <- naresid(model$na.action, res$sigma)
+    ##             sigma[is.na(sigma)] <- sqrt(deviance(model)/df.residual(model))
+    ##             res$sigma <- sigma
+    ##         }
+    ##     }
+    ##     res$wt.res <- naresid(model$na.action, res$wt.res)
+    ##     res$hat[res$hat > 1 - 10 * .Machine$double.eps] <- 1
+    ##     names(res$hat) <- names(res$sigma) <- names(res$wt.res)
+    ##     if (do.coef) {
+    ##         rownames(res$coefficients) <- names(res$wt.res)
+    ##         colnames(res$coefficients) <- names(coef(model))[!is.na(coef(model))]
+    ##     }
+    ##     res
+    ## }
+    ## <bytecode: 0x25805a0>
+    ## <environment: namespace:stats>
