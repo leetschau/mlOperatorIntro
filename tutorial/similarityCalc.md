@@ -64,6 +64,27 @@ dman
     ## 3 4 3  
     ## 4 2 5 6
 
+Python实现：
+
+``` python
+import numpy as np
+from scipy.spatial.distance import pdist
+inp = np.array([[2,1],[2,4],[4,3],[0,1]])
+deu = pdist(inp, 'euclidean')
+print(deu)
+```
+
+    ## [3.         2.82842712 2.         2.23606798 3.60555128 4.47213595]
+
+``` python
+dman = pdist(inp, 'cityblock')
+print(dman)
+```
+
+    ## [3. 4. 2. 3. 5. 6.]
+
+可以看到 `pdist()` 的返回结果是一个一维数组，与上面 R 计算结果相比较不难发现， Python的计算结果与R计算结果在列方向上从左到右连在一起后的结果是一致的。
+
 相似度排序
 ==========
 
@@ -104,3 +125,5 @@ data.frame(distance = ds)
     ## 2        3
     ## 1        4
     ## 4        6
+
+Python实现方法：确定基准观测后，使用循环依次组对，作为 `scipy.spatial.distance.cityblock` 或者 `scipy.spatial.distance.euclidean` 的参数计算出每个观测到基准点的距离，在输入 dataframe 新增“距离”列， 将距离计算结果保存在此列中，然后对此列排序。
