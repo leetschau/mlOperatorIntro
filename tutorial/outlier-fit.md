@@ -4,6 +4,7 @@
 -   [功能和使用场景](#功能和使用场景)
 -   [参数分析](#参数分析)
 -   [实例分析](#实例分析)
+    -   [Python 实现](#python-实现)
     -   [二次型异常检测](#二次型异常检测)
 
 功能和使用场景
@@ -139,6 +140,36 @@ summary(mdl2)
     ## F-statistic: 553.1 on 1 and 98 DF,  p-value: < 2.2e-16
 
 可以看到去掉异常点后，残差最大值从5.01下降到了2.52，而模型系数变化很小（0.96 vs 0.98，1.97 vs 2.07）， 符合前面对异常点的定义。
+
+Python 实现
+-----------
+
+下面基于线性拟合模型分析 Boston 数据集的异常点：
+
+``` python
+import numpy as np
+from sklearn.datasets import load_boston
+import pandas as pd
+import statsmodels.api as sm
+```
+
+    ## /home/leo/apps/miniconda3/envs/anaconda/lib/python3.6/site-packages/statsmodels/compat/pandas.py:56: FutureWarning: The pandas.core.datetools module is deprecated and will be removed in a future version. Please use the pandas.tseries module instead.
+    ##   from pandas.core import datetools
+
+``` python
+from statsmodels.stats.outliers_influence import OLSInfluence
+raw = load_boston()
+vlower = np.vectorize(lambda x: x.lower())
+df = pd.DataFrame(data=raw.data, columns=vlower(raw.feature_names))
+df['medv'] = raw.target
+lm = sm.OLS.from_formula('medv ~ lstat', df)
+res = lm.fit()
+# print(res.summary())
+rst = OLSInfluence(res).summary_frame().student_resid
+print(f'There are {sum(abs(rst) > 3)} outliers in Boston dataset.')
+```
+
+    ## There are 11 outliers in Boston dataset.
 
 二次型异常检测
 --------------

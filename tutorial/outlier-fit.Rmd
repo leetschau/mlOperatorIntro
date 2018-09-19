@@ -86,6 +86,27 @@ summary(mdl2)
 
 可以看到去掉异常点后，残差最大值从5.01下降到了2.52，而模型系数变化很小（0.96 vs 0.98，1.97 vs 2.07）， 符合前面对异常点的定义。
 
+## Python 实现
+
+下面基于线性拟合模型分析 Boston 数据集的异常点：
+```{python}
+import numpy as np
+from sklearn.datasets import load_boston
+import pandas as pd
+import statsmodels.api as sm
+from statsmodels.stats.outliers_influence import OLSInfluence
+
+raw = load_boston()
+vlower = np.vectorize(lambda x: x.lower())
+df = pd.DataFrame(data=raw.data, columns=vlower(raw.feature_names))
+df['medv'] = raw.target
+lm = sm.OLS.from_formula('medv ~ lstat', df)
+res = lm.fit()
+# print(res.summary())
+rst = OLSInfluence(res).summary_frame().student_resid
+print(f'There are {sum(abs(rst) > 3)} outliers in Boston dataset.')
+```
+
 ## 二次型异常检测
 
 试验数据包含两个特征和一个响应值：
