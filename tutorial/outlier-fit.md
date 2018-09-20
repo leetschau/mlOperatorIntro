@@ -5,7 +5,8 @@
 -   [参数分析](#参数分析)
 -   [实例分析](#实例分析)
     -   [Python 实现](#python-实现)
-    -   [二次型异常检测](#二次型异常检测)
+-   [二次型异常检测](#二次型异常检测)
+    -   [Python 实现](#python-实现-1)
 
 功能和使用场景
 ==============
@@ -172,7 +173,7 @@ print(f'There are {sum(abs(rst) > 3)} outliers in Boston dataset.')
     ## There are 11 outliers in Boston dataset.
 
 二次型异常检测
---------------
+==============
 
 试验数据包含两个特征和一个响应值：
 
@@ -225,3 +226,49 @@ sum(abs(sr) > 3)
     ## [1] 0
 
 计算结果显示没有异常值，与数据实际情况吻合。
+
+Python 实现
+-----------
+
+基于 statsmodels 包实现二次型拟合：
+
+``` python
+import numpy as np
+from sklearn.datasets import load_boston
+import pandas as pd
+import statsmodels.api as sm
+from statsmodels.stats.outliers_influence import OLSInfluence
+raw = load_boston()
+vlower = np.vectorize(lambda x: x.lower())
+df = pd.DataFrame(data=raw.data, columns=vlower(raw.feature_names))
+df['medv'] = raw.target
+lm = sm.OLS.from_formula('medv ~ lstat + I(dis**2) + I(dis*rm)', df)
+res = lm.fit()
+# print(res.summary())
+rst = OLSInfluence(res).summary_frame().student_resid
+print(f'There are {sum(abs(rst) > 3)} outliers in Boston dataset.')
+```
+
+    ## There are 10 outliers in Boston dataset.
+
+基于 sklearn 的实现方法：
+
+``` python
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from statsmodels.stats.outliers_influence import OLSInfluence
+import numpy as np
+pl = Pipeline([('poly', PolynomialFeatures(degree=3)),
+                  ('linear', LinearRegression(fit_intercept=False))])
+x = np.arange(5)
+y = 3 - 2 * x + x ** 2 - x ** 3
+model = pl.fit(x[:, np.newaxis], y)
+print(model.named_steps['linear'].coef_)
+# rst = OLSInfluence(model).summary_frame().student_resid
+# print(f'There are {sum(abs(rst) > 3)} outliers in Boston dataset.')
+```
+
+    ## [ 3. -2.  1. -1.]
+
+由于 `OLSInfluence()` 不接受 `Pipeline` 对象，所以基于 sklearn 只能算系数，不能计算 studentized residuals.
