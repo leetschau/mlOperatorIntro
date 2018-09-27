@@ -4,6 +4,7 @@
 -   [功能和使用场景](#功能和使用场景)
 -   [参数分析](#参数分析)
 -   [实例分析](#实例分析)
+-   [Python的LOF实现](#python的lof实现)
 -   [参考文献](#参考文献)
 
 功能和使用场景
@@ -139,6 +140,46 @@ head(output)
     ## [4,] 4.595281 2.6690922 1.493024
     ## [5,] 3.329508 0.7147645 1.223707
     ## [6,] 2.179532 5.4976616 1.812830
+
+Python的LOF实现
+===============
+
+下面采用上面R生成的测试数据 `dat` 生成 csv 文件：
+
+``` r
+write.table(dat, "outlier.csv", quote = FALSE, dec = ".", sep = ",")
+```
+
+作为基于 Python 的异常值分析的输入，选取不同 ![k](https://latex.codecogs.com/png.latex?k "k") 值（`n_neighbors`参数）计算异常值：
+
+``` python
+from sklearn.neighbors import LocalOutlierFactor
+import pandas as pd
+inp = pd.read_csv('outlier.csv', encoding='utf-8')
+clf10 = LocalOutlierFactor(n_neighbors=10)
+res10 = clf10.fit_predict(inp)
+print('There are', res10[res10<0].shape[0], 'outliers in the dataset.')
+```
+
+    ## There are 20 outliers in the dataset.
+
+``` python
+clf100 = LocalOutlierFactor(n_neighbors=100)
+res100 = clf100.fit_predict(inp)
+print('There are', res100[res100<0].shape[0], 'outliers in the dataset.')
+```
+
+    ## There are 20 outliers in the dataset.
+
+``` python
+clf190 = LocalOutlierFactor(n_neighbors=190)
+res190 = clf190.fit_predict(inp)
+print('There are', res190[res190<0].shape[0], 'outliers in the dataset.')
+```
+
+    ## There are 20 outliers in the dataset.
+
+可以看到异常值的数量是固定的，这是由于 [LocalOutlierFactor](http://scikit-learn.org/stable/modules/generated/sklearn.neighbors.LocalOutlierFactor.html) 函数的 `contamination` 参数默认值是 0.1，由于判断一个观测点是否是异常值存在一定的主观性，Python的处理方式是由用户根据业务场景给出整个数据集中异常值所占百分比（例如10%），计算出每个观测的LOF值，取出其中异常可能性最大的前10%标记为异常值。 函数参数 `n_neighbors` 不同导致评判标准发生变化，虽然都选出了10%的异常点，但具体哪些被选为异常点则随着 `n_neighbors` 的变化而变化。
 
 参考文献
 ========
