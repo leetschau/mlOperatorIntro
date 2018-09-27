@@ -63,16 +63,18 @@ table(inp$treatment, inp$improvement)
 使用卡方检验计算输入数据中，特征1：是否服用药物（inp数据集的 *treatment* 列）和特征2是否有效果（inp数据集的 *improvement* 列），这两个特征是否存在关联性：
 
 ``` r
-chisq.test(inp$treatment, inp$improvement)
+chisq.test(inp$treatment, inp$improvement, correct = FALSE)
 ```
 
     ## 
-    ##  Pearson's Chi-squared test with Yates' continuity correction
+    ##  Pearson's Chi-squared test
     ## 
     ## data:  inp$treatment and inp$improvement
-    ## X-squared = 4.6626, df = 1, p-value = 0.03083
+    ## X-squared = 5.5569, df = 1, p-value = 0.01841
 
 p-value 小于0.05，拒绝零假设，即药物对康复有效果。
+
+这里 `correct = FALSE` 是为了与 Spark `org.apache.spark.ml.stat.ChiSquareTest()` 对象的 `test()` 方法计算结果保持一致。
 
 与其他检验方法的关系
 ====================
@@ -81,7 +83,7 @@ p-value 小于0.05，拒绝零假设，即药物对康复有效果。
 
 场景2：在场景1中，已知总体方差：使用z检验，否者使用t检验；
 
-场景3：P判断两个因素之间是否存在关联使用卡方检验，处理的是类别型数据；
+场景3：判断两个因素之间是否存在关联使用卡方检验，处理的是类别型数据；
 
 参考文献
 ========
