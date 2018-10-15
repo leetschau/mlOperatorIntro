@@ -69,3 +69,15 @@ lines(mas8c, col = 'blue')
 # 算法总结
 
 移动平均是一种简单高效的数据平滑方法，计算量小，适用范围广。实际使用过程中，如果根据业务目标不能确定准确的阶数，可以结合方差分析或者CV技术确定最佳值。
+
+# 数据导入/导出
+
+用下面的脚本生成输入数据，注意要手工在第一行首添加 `id,`：
+```{r}
+library(zoo)
+timestamp <- as.yearmon(time(wineind))
+inp <- data.frame(time=timestamp, wine=wineind)
+write.table(inp, "ma-test-input.csv", quote = FALSE, dec = ".", sep = ",")
+```
+
+算子参数：$p = 0, q = 6, d = 0$。

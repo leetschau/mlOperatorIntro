@@ -41,13 +41,15 @@ head(dat.train)
 
 基于OLS（普通最小二乘法）方法拟合AR模型：
 ```{r}
-arols <- ar(dat.train, method = 'ols', aic = TRUE)  # 使用 ar 函数拟合自回归模型
+arols <- ar(dat.train, method = 'ols', aic = TRUE, order.max = 8)  # 使用 ar 函数拟合自回归模型
 arols$order
 arols$ar
 ```
 
-
 这里 `arols$ar` 就是公式(1)中的系数向量 $\phi_1 \dots \phi_p$。
+
+由于在 Python 的 statsmodels 模型中做 ARIMA 计算时，过高的阶数（例如27）无法算出结果（长时间CPU 100%），
+这里指定最高阶数（通过 `order.max` 参数）为 8。
 
 在测试集上预测：
 ```{r}
@@ -106,3 +108,14 @@ mean(abs(pred.arm$pred - dat.test))
 
 以 MAE 为评价指标，基于 OLS 的 AR 模型的预测精度高于 ARIMA模型（20.48 vs 36.26），但前者的模型复杂度显著高于后者（27 vs 2），也要通过业务需求和计算资源在复杂度和精度间做取舍。
 
+# 数据导入/导出
+
+用下面的脚本生成输入数据，注意要手工在第一行首添加 `id,`：
+```{r}
+library(zoo)
+timestamp <- as.yearmon(time(dat.train))
+inp <- data.frame(time=timestamp, sunspots=dat.train)
+write.table(inp, "ar-test-input.csv", quote = FALSE, dec = ".", sep = ",")
+```
+
+算子参数：$p = 6, q = 0, d = 0$。

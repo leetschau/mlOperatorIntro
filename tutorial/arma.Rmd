@@ -75,12 +75,6 @@ am.mdl <- arma(dat.tr.sta, order = c(2, 2))
 summary(am.mdl)
 ```
 
-预测太阳黑子的在测试集上的月度数量：
-```{r}
-# forecast(am.mdl, 12)
-```
-
-
 随机变量 $y = \beta_0 + \beta_1 x_1 + \beta_2 x_2$，且 $x_1$ 与 $x_2$ 相关，则 $y$ 与 $x_1$ 的相关性中，去掉由于 $x_2$ 与 $y$、$x_1$ 都相关造成的 $y$ 与 $x_1$ 相关部分，剩下的相关性就是 $y$ 与 $x_1$ 的 *偏自相关系数*。
 
 ## 与 ARIMA 对比
@@ -89,13 +83,31 @@ summary(am.mdl)
 library(forecast)
 arm.mdl <- auto.arima(dat.train)   # 使用自动确定系数的 arima 方法构建 ARIMA 模型
 summary(arm.mdl)
+```
+
+预测太阳黑子的在测试集上的月度数量：
+```{r}
+# forecast(am.mdl, 12)
 pred.arm <- predict(arm.mdl, n.ahead = 12)
+pred.arm
 ```
 
 计算此模型的MAE:
 ```{r}
 mean(abs(pred.arm$pred - dat.test))
 ```
+
+# 数据导入/导出
+
+用下面的脚本生成输入数据，注意要手工在第一行首添加 `id,`：
+```{r}
+library(zoo)
+timestamp <- as.yearmon(time(dat.train))
+inp <- data.frame(time=timestamp, sunspots=dat.train)
+write.table(inp, "arma-test-input.csv", quote = FALSE, dec = ".", sep = ",")
+```
+
+算子参数：$p = 2, q = 2, d = 1$。
 
 # 参考文献
 

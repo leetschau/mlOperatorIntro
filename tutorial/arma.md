@@ -6,6 +6,7 @@ ARMA模型介绍
     -   [生成稳态序列](#生成稳态序列)
     -   [自相关系数和移动平均系数](#自相关系数和移动平均系数)
     -   [与 ARIMA 对比](#与-arima-对比)
+-   [数据导入/导出](#数据导入导出)
 -   [参考文献](#参考文献)
 
 功能和使用场景
@@ -119,12 +120,6 @@ summary(am.mdl)
     ## Fit:
     ## sigma^2 estimated as 244.1,  Conditional Sum-of-Squares = 684461.8,  AIC = 23407.43
 
-预测太阳黑子的在测试集上的月度数量：
-
-``` r
-# forecast(am.mdl, 12)
-```
-
 随机变量 ![y = \\beta\_0 + \\beta\_1 x\_1 + \\beta\_2 x\_2](https://latex.codecogs.com/png.latex?y%20%3D%20%5Cbeta_0%20%2B%20%5Cbeta_1%20x_1%20%2B%20%5Cbeta_2%20x_2 "y = \beta_0 + \beta_1 x_1 + \beta_2 x_2")，且 ![x\_1](https://latex.codecogs.com/png.latex?x_1 "x_1") 与 ![x\_2](https://latex.codecogs.com/png.latex?x_2 "x_2") 相关，则 ![y](https://latex.codecogs.com/png.latex?y "y") 与 ![x\_1](https://latex.codecogs.com/png.latex?x_1 "x_1") 的相关性中，去掉由于 ![x\_2](https://latex.codecogs.com/png.latex?x_2 "x_2") 与 ![y](https://latex.codecogs.com/png.latex?y "y")、![x\_1](https://latex.codecogs.com/png.latex?x_1 "x_1") 都相关造成的 ![y](https://latex.codecogs.com/png.latex?y "y") 与 ![x\_1](https://latex.codecogs.com/png.latex?x_1 "x_1") 相关部分，剩下的相关性就是 ![y](https://latex.codecogs.com/png.latex?y "y") 与 ![x\_1](https://latex.codecogs.com/png.latex?x_1 "x_1") 的 *偏自相关系数*。
 
 与 ARIMA 对比
@@ -151,9 +146,25 @@ summary(arm.mdl)
     ##                      ME     RMSE      MAE MPE MAPE      MASE        ACF1
     ## Training set 0.01325995 15.58358 11.01217 NaN  Inf 0.4795732 -0.01121674
 
+预测太阳黑子的在测试集上的月度数量：
+
 ``` r
+# forecast(am.mdl, 12)
 pred.arm <- predict(arm.mdl, n.ahead = 12)
+pred.arm
 ```
+
+    ## $pred
+    ##            Jan       Feb       Mar       Apr       May       Jun       Jul
+    ## 1983 115.47734 109.71904 106.52032 104.49051 103.02321 101.85134 100.85487
+    ##            Aug       Sep       Oct       Nov       Dec
+    ## 1983  99.97770  99.19172  98.48129  97.83641  97.24986
+    ## 
+    ## $se
+    ##           Jan      Feb      Mar      Apr      May      Jun      Jul
+    ## 1983 15.59747 17.98742 19.12838 19.99641 20.84288 21.75030 22.74408
+    ##           Aug      Sep      Oct      Nov      Dec
+    ## 1983 23.82594 24.98753 26.21682 27.50112 28.82854
 
 计算此模型的MAE:
 
@@ -162,6 +173,30 @@ mean(abs(pred.arm$pred - dat.test))
 ```
 
     ## [1] 36.25613
+
+数据导入/导出
+=============
+
+用下面的脚本生成输入数据，注意要手工在第一行首添加 `id,`：
+
+``` r
+library(zoo)
+```
+
+    ## 
+    ## Attaching package: 'zoo'
+
+    ## The following objects are masked from 'package:base':
+    ## 
+    ##     as.Date, as.Date.numeric
+
+``` r
+timestamp <- as.yearmon(time(dat.train))
+inp <- data.frame(time=timestamp, sunspots=dat.train)
+write.table(inp, "arma-test-input.csv", quote = FALSE, dec = ".", sep = ",")
+```
+
+算子参数：![p = 2, q = 2, d = 1](https://latex.codecogs.com/png.latex?p%20%3D%202%2C%20q%20%3D%202%2C%20d%20%3D%201 "p = 2, q = 2, d = 1")。
 
 参考文献
 ========
