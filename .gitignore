@@ -3,3 +3,4 @@ rsconnect/
 .Rhistory
 .Rproj.user
 .RData
+**/.ipynb_checkpoints/
