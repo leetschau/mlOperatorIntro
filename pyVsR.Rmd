@@ -1,0 +1,90 @@
+---
+title: "Python/R 建模对比"
+output: html_document
+---
+
+# 整体评估
+
+| | Python | R |
+| - | - | - |
+| 代码量 | 4 | 5 |
+| 建模难度 | 4 | 5 |
+| 维护成本 | 4 | 5 |
+| 核心库成熟度 | 4 | 5 |
+| 可视化 | 4 | 5 |
+| 数据展示 | 3 | 5 |
+| 开发环境整合 | 4 | 5 |
+| 社区活跃度 | 5 | 5 |
+| 大数据支持 | 5 | 4 |
+| 工程化支持 | 5 | 3 |
+| 代码规范化 | 5 | 3 |
+
+## 说明
+
+* 维护成本：Python 是 OOP 为主的多范式语言，数据分析的主力 packages，包括 pandas, scikit-learn 使用 OOP-FP 混合风格；R 在用户 API 层面基本实现了纯粹的 FP 风格，代码表达能力强，可读性好；
+
+* 数据可视化：R 的 *ggplot2* 包基于 *Grammar of Graphics* 实现了图形语义，极大提升了数据可视化的表达能力；Python 的 matplotlib, seaborn 功能较弱，对标 ggplot 的 [ggpy](https://github.com/yhat/ggpy) 近3年来没有更新；
+
+* 数据展示：数据分析结果的展示能力，R 有 killer app **RMarkdown** 和 **shiny dashboard**，可以方便地将数据图表整合为交互式的数据应用（对标 Tableau, PowerBI, 帆软等），Python 的 Jupyter notebook 在展示效果和版本控制友好等方面相比 RMardown 还有一定的距离，dashboard 工具方面，新秀 [dash](https://plot.ly/products/dash/) 发展势头不错，但距离 shiny 还有一定距离；
+
+* 开发环境整合：R 的 开发工具 RStudio (server) 实现了完整的数据探索工具链，包括 editor, REPL, 数据窗口、绘图窗口和帮助文档，以及辅助的命令历史、文件浏览、版本控制等工具窗口；Python 的开发环境选择方案较多，最常用的 PyCharm community edition 对数据分析支持有限，professional edition 价格昂贵，其他还有 Spyder(开发不活跃，维护为主), Rodeo (开发不活跃), Jupyter Lab (最有前途，但目前还处于完善核心功能阶段) 等，目前功能最完整的是 text editor (vim, sublime, VS Code, etc) + REPL (IPython)，有一定的学习成本；
+
+* 大数据支持：PySpark 2.3 增加的 *pandas_udf* 大幅降低了 Python 代码向 Spark 迁移的成本，另外 Python 社区的 *Dask* 也是比较成熟的分布式计算框架；R 的 [sparklyr](https://spark.rstudio.com/) 目标是实现对 dplyr 包的完整支持，从而实现 单点-分布式 程序的统一。SparkR 由于性能问题目前在生产环境中使用较少，另外还有一个比较冷门的 [pbdR](https://pbdr.org/)；
+
+* 工程化支持，指开发者能够方便地配置不同项目的开发环境，并将开发环境中通过验证的代码方便地发布到生产环境中。Python 有完善的工具链支持，包括但不限于：pip, pipenv, conda, pyinstaller, pyminifier 等；R 只有 packrat 实现了初步的环境管理；
+
+* 代码规范化：Python 有 PEP8 规范，在此基础上社区开发了 flake8, autopep8, yapf 等多款格式、语法和语义检查/修正工具，在主流编辑器上都有插件，R 社区尚没有统一的代码风格规范，只有一些命名和格式习惯。
+
+## 总结
+
+R 适合作为数据探索和展示、沟通工具，代码表达能力强，可以快速构建分析模型、并生成功能丰富的文档、应用。
+Python 则适合作为大数据分析工具，在工程化、代码规范度、性能等方面更胜一筹。
+
+# 模型对比
+
+## 简单模型和数据处理
+
+下面分别用 R 和 Python 实现了线性回归模型：
+```{r}
+set.seed(100)
+inp <- data.frame('x' = 4 * rnorm(100))
+inp$y <- 4 * inp$x - 1 + 4 * rnorm(100)
+plot(inp, col = 'blue')
+fit <- lm(y ~ x, data = inp)
+abline(fit, col = 'red')
+```
+
+
+```
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+# Create random data
+np.random.seed(100)
+x = 4 * np.random.rand(100)
+y = 4 * x - 1 + 4 * np.random.rand(100)
+inp = pd.DataFrame({'x': x, 'y': y})
+
+# Create model
+model = LinearRegression(fit_intercept=True)
+model.fit(inp.x[:, np.newaxis], inp.y)
+
+xfit = np.linspace(0, 5, 50)
+yfit = model.predict(xfit[:, np.newaxis])
+
+# plot
+plt.scatter(inp.x, inp.y, c='b')
+plt.plot(xfit, yfit, c='r')
+plt.show()
+```
+
+不难发现 R 的代码几乎是自解释的，而 Python 代码则需要具备一定的领域知识才能理解。
+
+## 复杂模型分析
+
+## 数据可视化
+
+## 分布式迁移
+
