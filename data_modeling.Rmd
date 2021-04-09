@@ -1,0 +1,1343 @@
+---
+title: "R 数据建模"
+author: "大数据-李超"
+date: "2021-04-09"
+# date: "`r Sys.Date()`"
+output: 
+  html_document:
+    fig_caption: yes
+    highlight: haddock
+    number_sections: yes
+    theme: united
+    toc: yes
+    toc_depth: 6
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+
+什么是模型？
+
+**数据集** 是一个 **复杂系统** 某些特征的量化体现，
+**模型** 是对一个数据集的低维概括性表示。
+
+建模过程包含哪些步骤？
+
+1. 提取数据，形成数据集；
+
+1. 根据业务领域知识，选择一个（或多个）模型族，
+   模型族可以是参数化的（例如线性回归），也可以是非参数化的（例如树方法）；
+
+1. 用模型族中的每个模型拟合数据集，找到拟合效果最好的那个模型，作为系统建模的最终结果。
+
+这个过程决定了模型具有以下特点：
+
+* 模型没有对与错之分，只有质量高低之分；
+
+* 模型族的选择往往比模型拟合过程对模型质量的影响更大。
+
+# 基本建模过程
+
+## 建模过程示例
+
+下面以一个 `tidyverse` 内置数据集 `sim1` 为例说明建模的基本过程。
+
+```{r}
+library(tidyverse)
+library(modelr)
+options(na.action = na.warn)
+
+sim1
+
+ggplot(sim1, aes(x, y)) +
+  geom_point()
+```
+
+从分布形式上看用一阶线性模型比较好，也就是形如 $y = a_0 + a_1 x$ 的模型，
+于是使用均匀分布生成函数 `runif` 随机生成250个一阶线性模型：
+```{r}
+models <- tibble(
+  a1 = runif(250, -20, 40),
+  a2 = runif(250, -5, 5)
+)
+
+ggplot(sim1, aes(x, y)) +
+  geom_abline(aes(intercept = a1, slope = a2), data = models, alpha = 1/4) +
+  geom_point()
+```
+
+其中大多数效果很差（很正常），但其中也有看上去比较靠谱的。
+
+创建模型生成器 `model1`，并使用它创建一个 $a_0 = 7, \; a_1 = 1.5$ 的模型：
+```{r}
+model1 <- function(a, data) {
+  a[1] + data$x * a[2]
+}
+model1(c(7, 1.5), sim1)
+```
+
+计算此模型的 *root-mean-squared deviation* (RMSD):
+```{r}
+measure_distance <- function(mod, data) {
+  diff <- data$y - model1(mod, data)
+  sqrt(mean(diff ^ 2))
+}
+measure_distance(c(7, 1.5), sim1)
+```
+
+计算所有 250 个模型的 RMSD:
+```{r}
+sim1_dist <- function(x1, x2) {
+  measure_distance(c(x1, x2), sim1)
+}
+
+models <- models %>% 
+  mutate(dist = purrr::map2_dbl(a1, a2, sim1_dist))
+models
+```
+
+这里 `purrr::map2_dbl()` 是 `map2()` 函数族的一员，表示并行版本的 `map()` 函数，
+这里的意思是：将`sim1_dist(x1, x2)` 映射到 `models` 的 `dist` 列上，
+其中第1个参数 `x1` 来自 `models` 的 `a1` 列，第2个参数 `x2` 来自 `a2` 列。
+
+为了便于区别，修改了原代码里 `sim1_dist` 的名义参数列表。
+
+画出 RMSD 最小的前10个模型，RMSD 值越小拟合效果越好，
+对应的线颜色越浅 （用 `dist` 的相反数表征，相反数越小颜色越深）：
+```{r}
+ggplot(sim1, aes(x, y)) + 
+  geom_point(size = 2, colour = "grey30") + 
+  geom_abline(
+    aes(intercept = a1, slope = a2, colour = -dist), 
+    data = filter(models, rank(dist) <= 10)
+  )
+```
+
+
+用散点图表示最优10个模型和所有模型：
+```{r}
+ggplot(models, aes(a1, a2)) +
+  geom_point(data = filter(models, rank(dist) <= 10), size = 4, colour = "red") +
+  geom_point(aes(colour = -dist))
+```
+
+使用均匀分布的二维阵列代替上面的随机数，重新绘制模型质量散点图：
+```{r}
+grid <- expand.grid(
+  a1 = seq(-5, 20, length = 25),
+  a2 = seq(1, 3, length = 25)
+  ) %>%
+  mutate(dist = purrr::map2_dbl(a1, a2, sim1_dist))
+
+grid %>%
+  ggplot(aes(a1, a2)) +
+  geom_point(data = filter(grid, rank(dist) <= 10), size = 4, colour = "red") +
+  geom_point(aes(colour = -dist))
+```
+
+二维阵列保存在 `grid` 中，模型质量保存在 `grid$dist` 中。
+
+用筛选出来的最好的10个模型绘制拟合图：
+```{r}
+ggplot(sim1, aes(x, y)) + 
+  geom_point(size = 2, colour = "grey30") + 
+  geom_abline(
+    aes(intercept = a1, slope = a2, colour = -dist), 
+    data = filter(grid, rank(dist) <= 10)
+  )
+```
+
+使用 Newton-Raphson 搜索（由 `optim` 函数实现）寻找 `measure_distance` 函数在 `sim1` 数据集上的最小值：
+```{r}
+best <- optim(c(0, 0), measure_distance, data = sim1)
+best$par
+#> [1] 4.22 2.05
+
+ggplot(sim1, aes(x, y)) + 
+  geom_point(size = 2, colour = "grey30") + 
+  geom_abline(intercept = best$par[1], slope = best$par[2])
+```
+
+这样就完成了系统建模的最后一步：用模型拟合数据，找到最好的那一个。
+但这里使用 Newton-Raphson 方法 **可能** 找到的是局部最优解，
+为了确保找到全局最优解，使用 R 提供的 `lm()` 函数：
+```{r}
+sim1_mod <- lm(y ~ x, data = sim1)
+coef(sim1_mod)
+```
+
+全局最优解与使用 `optim()` 得到的最优解一致。
+
+## 模型可视化
+
+使用预测值-残差方法分析模型，首先用 `data_grid` 函数得到数据集的所有值（无重复）：
+```{r}
+grid <- sim1 %>% 
+  data_grid(x) 
+grid
+```
+
+用 `add_predictions()` 函数计算模型的预测值：
+```{r}
+grid <- grid %>% 
+  add_predictions(sim1_mod) 
+grid
+```
+
+用 `grid$pred` 绘制拟合曲线：
+```{r}
+ggplot(sim1, aes(x)) +
+  geom_point(aes(y = y)) +
+  geom_line(aes(y = pred), data = grid, colour = "red", size = 1)
+```
+
+与上面使用 `geom_abline()` 绘制拟合曲线相比，这里的计算方法更通用，适用于所有模型。
+
+我们知道模型是对数据的简化概括，所以它反映了数据集的某些特征，忽略了另一些特征，
+这些被忽略的特征，就体现在残差里。
+
+使用 `add_residuals()` 
+```{r}
+sim1 <- sim1 %>% 
+  add_residuals(sim1_mod)
+sim1
+```
+
+绘制残差的折线图：
+```{r}
+ggplot(sim1, aes(resid)) + 
+  geom_freqpoly(binwidth = 0.5)
+sum(sim1$resid)
+```
+
+可以看到残差在 $X$ 轴两侧出现频率覆盖的面积基本一致，表明残差的和为0，
+使用 `sum()` 函数求残差和验证了上面的假设。
+
+绘制残差分布图：
+```{r}
+ggplot(sim1, aes(x, resid)) + 
+  geom_ref_line(h = 0) +
+  geom_point()
+```
+
+## 公式与模型族
+
+```{r}
+df <- tribble(
+  ~y, ~x1, ~x2,
+  4, 2, 5,
+  5, 1, 6
+)
+model_matrix(df, y ~ x1)
+```
+
+### 类别型变量作为 x 轴
+
+自制数据集的 *model_matrix*:
+```{r}
+df <- tribble(
+  ~ sex, ~ response,
+  "male", 1,
+  "female", 2,
+  "male", 1
+)
+model_matrix(df, response ~ sex)
+```
+
+参考 [Design matrix](https://en.wikipedia.org/wiki/Design_matrix).
+
+*sim2* 数据集及其线性拟合：
+```{r}
+sim2
+ggplot(sim2) + 
+  geom_point(aes(x, y))
+mod2 <- lm(y ~ x, data = sim2)
+
+grid <- sim2 %>% 
+  data_grid(x) %>% 
+  add_predictions(mod2)
+grid
+```
+
+拟合值是每个类别所有 $Y$ 值的平均值（最小化了 root-mean-squared distance）：
+```{r}
+ggplot(sim2, aes(x)) + 
+  geom_point(aes(y = y)) +
+  geom_point(data = grid, aes(y = pred), colour = "red", size = 4)
+```
+
+### 类别与连续型变量交互
+
+```{r}
+sim3
+ggplot(data = sim3, mapping = aes(x1, y)) +
+  geom_point(aes(colour = x2))
+```
+
+两个模型族：
+```{r}
+mod1 <- lm(y ~ x1 + x2, data = sim3)
+mod2 <- lm(y ~ x1 * x2, data = sim3)
+```
+
+为两个特征添加预测值：
+```{r}
+grid <- sim3 %>% 
+  data_grid(x1, x2) %>% 
+  gather_predictions(mod1, mod2)
+grid
+```
+
+线性拟合模型：
+```{r}
+ggplot(sim3, aes(x1, y, colour = x2)) + 
+  geom_point() + 
+  geom_line(data = grid, aes(y = pred)) + 
+  facet_wrap(~ model)
+```
+
+对比两个模型的残差：
+```{r}
+sim3 <- sim3 %>% 
+  gather_residuals(mod1, mod2)
+
+ggplot(sim3, aes(x1, resid, colour = x2)) + 
+  geom_point() + 
+  facet_grid(model ~ x2)
+```
+
+很明显 *mod1* 的 *b*, *c*, *d* 项的残差包含了某种模式，说明模型没有包含数据中的所有信息。
+所以 *mod2* 比 *mod1* 更好。
+
+### 两个连续型变量交互
+
+基于 sim4 生成两个模型，以及各自的预测值：
+```{r}
+sim4
+mod1 <- lm(y ~ x1 + x2, data = sim4)
+mod2 <- lm(y ~ x1 * x2, data = sim4)
+
+grid <- sim4 %>% 
+  data_grid(
+    x1 = seq_range(x1, 5), 
+    x2 = seq_range(x2, 5) 
+  ) %>% 
+  gather_predictions(mod1, mod2)
+grid
+```
+
+绘制拟合图：
+```{r}
+ggplot(grid, aes(x1, x2)) + 
+  geom_tile(aes(fill = pred)) + 
+  facet_wrap(~ model)
+```
+
+似乎差别不大，改为绘制等高线，`x2` 处于不同区间时 `x1` 的预测值趋势，
+以及 `x1` 处于不同区间时 `x2` 的预测值趋势：
+```{r}
+ggplot(grid, aes(x1, pred, colour = x2, group = x2)) +
+  geom_line() +
+  facet_wrap(~ model)
+ggplot(grid, aes(x2, pred, colour = x1, group = x1)) + 
+  geom_line() +
+  facet_wrap(~ model)
+```
+
+由于 `mod1` 是线性模型，所以各条线之间是平行的，
+`mod2` 由于增加了交互项，各条线之间不再平行。
+
+这里为什么要用 `group` 参数？
+如果去掉这个参数，效果如下：
+```{r}
+ggplot(grid, aes(x1, pred, colour = x2)) +
+  geom_line() +
+  facet_wrap(~ model)
+ggplot(grid, aes(x1, pred, colour = x2)) +
+  geom_point() +
+  facet_wrap(~ model)
+ggplot(grid, aes(x1, pred, group = x2)) +
+  geom_line() +
+  facet_wrap(~ model)
+```
+
+可以看到，由于二维绘图无法展示包含两个特征的数据集，
+如果不使用 `group` 参数，`geom_line()` 会把 `x1` 作为唯一自变量，
+将所有点连在一起，这显然是不合理的（上面第一张图）。
+第二张图展示了数据的实际形态，解释了第一张图形成的原因。
+
+解决方法是使用 `group` 参数将隐藏的连续型特征 `x2` 转为类别变量（使用 binage 方法），
+然后分组 (group) 绘制（上面第三张图）。
+使用分组虽然能绘制 `x2` 各种情况下 `x1` 和 `pred` 之间的关系，
+但多条线之间没有视觉上的区分，所以一般与 `color` 或者 `shape` 联合使用。
+
+### 变换
+
+通过在线性模型上施加变换 (transformation)，可以方便地将上面的建模技术扩展到非线性领域。
+
+我们知道通过泰勒级数展开可以用多项式拟合任何连续函数，而多项式又是线性模型的一种，
+下面是一个自然样条拟合的例子：
+```{r}
+df <- tribble(
+  ~y, ~x,
+   1,  1,
+   2,  2, 
+   3,  3
+)
+library(splines)
+model_matrix(df, y ~ ns(x, 2))
+```
+
+最后通过一个自然样条函数拟合三角函数的例子说明非线性建模技术，首先准备好原始数据：
+```{r}
+sim5 <- tibble(
+  x = seq(0, 3.5 * pi, length = 50),
+  y = 4 * sin(x) + rnorm(length(x))
+)
+
+ggplot(sim5, aes(x, y)) +
+  geom_point()
+```
+
+用不同次数的模型拟合：
+```{r}
+mod1 <- lm(y ~ ns(x, 1), data = sim5)
+mod2 <- lm(y ~ ns(x, 2), data = sim5)
+mod3 <- lm(y ~ ns(x, 3), data = sim5)
+mod4 <- lm(y ~ ns(x, 4), data = sim5)
+mod5 <- lm(y ~ ns(x, 5), data = sim5)
+
+grid <- sim5 %>% 
+  data_grid(x = seq_range(x, n = 50, expand = 0.1)) %>% 
+  gather_predictions(mod1, mod2, mod3, mod4, mod5, .pred = "y")
+
+ggplot(sim5, aes(x, y)) + 
+  geom_point() +
+  geom_line(data = grid, colour = "red") +
+  facet_wrap(~ model)
+```
+
+## 处理缺失值
+
+空值不能传递任何变量间有价值的信息，所以 R 默认剔除数据中的空值。
+如果需要遇到空值后提出警告，而不是直接删除，可以通过设置 `options(na.action = na.warn)` 实现，
+本文第一节中设置了这一特征，效果如下所示：
+```{r}
+df <- tribble(
+  ~x, ~y,
+  1, 2.2,
+  2, NA,
+  3, 3.5,
+  4, 8.3,
+  NA, 10
+)
+
+mod <- lm(y ~ x, data = df)
+```
+
+如果需要在某次建模时关闭警告，可以通过 `na.action = na.exclude` 实现：
+```{r}
+mod <- lm(y ~ x, data = df, na.action = na.exclude)
+```
+
+然后用 `nobs()` 函数查看这个模型使用了多少有效的观测：
+```{r}
+nobs(mod)
+```
+
+## 其他模型族
+
+以上以线性模型为例说明了建模过程，线性模型虽然应用十分广泛，但也不是唯一的选择，
+下面列出了数据建模中常用的其他几种模型族以及 R 中常用的实现方法：
+
+* Generalised linear models: `stats::glm()`
+
+* Generalised additive models: `mgcv::gam()`
+
+* Penalised linear models: `glmnet::glmnet()`
+
+* Robust linear models: `MASS:rlm()`
+
+* Trees: `rpart::rpart()`
+
+# 实例分析
+
+面对包含许多陌生信息的数据集，如何渐进地构造出满足业务要求的数据模型？
+按照下面的流程，不断循环迭代，得到一个足够好的模型：
+
+1. 观察现有数据，提出假设；
+
+1. 根据已有假设，通过可视化方法构建初始模型；
+
+1. 从原始数据集中去掉模型可以解释的部分，得到残差；
+
+1. 将残差作为模型，重复前面两个步骤，直到最终残差符合终止条件。
+
+下面通过两个实例说明上述方法在实际数据集上的应用过程。
+
+```{r}
+options(na.action = na.warn)
+library(nycflights13)
+library(lubridate)
+```
+
+## 低品质钻石反而贵？
+
+```{r}
+ggplot(diamonds, aes(cut, price)) + geom_boxplot()
+ggplot(diamonds, aes(color, price)) + geom_boxplot()
+ggplot(diamonds, aes(clarity, price)) + geom_boxplot()
+```
+
+三张图提供了类似的信息：
+
+切割工艺 (*Fair*)、颜色 (*J*) 和纯度 (*I1*) 最差的钻石反而价格最高。
+
+### 价格与重量的关系
+
+为了找到这里“反常”价格的原因，先对数据集随机抽取50个样本：
+```{r}
+diamonds %>%
+  sample_n(50) %>%
+  select(price, carat, cut, color, clarity)
+```
+
+通过观察我们发现，价格受到重量 (carat) 的影响比较大，而且似乎比其他因素的影响还要大，
+所以当撇开重量谈价格，是没有任何意义的。
+
+现在问题变成了，如果通过建模过程，将上面的假设转换为具体的模型，最终证实或者证否基于感觉得到的结论？
+例如：如何量化各因素对价格的影响？
+
+第1步：看一下重量和价格的关系：
+```{r}
+ggplot(diamonds, aes(carat, price)) +
+  geom_hex(bins = 50)
+```
+
+二者之间似乎存在非线性关系，为了更好的揭示它们之间的关系，
+不妨先去掉特别重的钻石，这类钻石只占总体的0.3%，且容易扭曲整体关系，
+然后求二者的对数，看看效果如何：
+```{r}
+diamonds2 <- diamonds %>%
+  filter(carat <= 2.5) %>%
+  mutate(lprice = log2(price), lcarat = log2(carat))
+head(diamonds2)
+ggplot(diamonds2, aes(lcarat, lprice)) +
+  geom_hex(bins = 50)
+```
+
+现在可以确定，重量确实与价格之间存在直接联系。
+
+第2步：用线性模型体现二者之间的现有关系：
+```{r}
+mod_diamond <- lm(lprice ~ lcarat, data = diamonds2)
+summary(mod_diamond)
+```
+
+把这个模型绘制出来，并叠加到原始数据上：
+```{r}
+head(diamonds2)
+
+grid <- diamonds2 %>%
+  data_grid(carat = seq_range(carat, 20)) %>%
+  mutate(lcarat = log2(carat)) %>%
+  add_predictions(mod_diamond, "lprice") %>%
+  mutate(price = 2 ^ lprice)
+
+head(grid, 10)
+
+ggplot(diamonds2, aes(carat, price)) +
+  geom_hex(bins = 50) +
+  geom_line(data = grid, colour = "red", size = 1)
+```
+
+这里首先通过 `seq_range(carat, 20)` 将重量（*carat* 列）转换为一个长度为20的等间距向量，
+它的最大、最小值等于原始 *carat* 向量的最大、最小值。
+再通过 `data_grid` 函数生成一个长度为20的 tibble：
+```{r}
+diamonds2 %>%
+  data_grid(carat = seq_range(carat, 20))
+```
+
+然后基于这个 *carat* 生成新的 *lcarat* （重量的对数）：
+```{r}
+diamonds2 %>%
+  data_grid(carat = seq_range(carat, 20)) %>%
+  mutate(lcarat = log2(carat))
+```
+
+结合上面的线性模型 *mod_diamond*，将现有 *lcarat* 列对应的 *lprice* 添加进来：
+```{r}
+diamonds2 %>%
+  data_grid(carat = seq_range(carat, 20)) %>%
+  mutate(lcarat = log2(carat)) %>%
+  add_predictions(mod_diamond, "lprice")
+```
+
+最后基于预测值 *lprice* 生成真实的预测价格 *price*。
+
+也可以不用 `data_grid` 简化重量，在原数据集上生成价格预测值：
+```{r}
+grid2 <- diamonds2 %>%
+  add_predictions(mod_diamond, "lprice") %>%
+  mutate(price = 2 ^ lprice)
+
+ggplot(diamonds2, aes(carat, price)) +
+  geom_hex(bins = 50) +
+  geom_line(data = grid2, colour = "red", size = 1)
+```
+
+效果与简化版本完全一致，只是计算量比前者大了很多。
+
+第3步：从现有数据中去除模型可以解释的部分：
+```{r}
+diamonds2 <- diamonds2 %>%
+  add_residuals(mod_diamond, "lresid")
+
+ggplot(diamonds2, aes(lcarat, lresid)) +
+  geom_hex(bins = 50)
+```
+
+
+第4步：将残差作为新的模型进行分析：
+```{r}
+ggplot(diamonds2, aes(cut, lresid)) + geom_boxplot()
+ggplot(diamonds2, aes(color, lresid)) + geom_boxplot()
+ggplot(diamonds2, aes(clarity, lresid)) + geom_boxplot()
+```
+
+可以看到，去掉重量影响后，切割工艺、颜色和纯度与价格的关系正常了。
+
+从上面的图形可以进一步量化各个因素对价格的影响，
+这里 `lresid` 的含义是：重量以外的因素对价格造成影响的以2为底的对数，例如：
+纯度为 *VS2* 钻石的 `lresid` 中位数接近于0，表明可以用 *VS2* 作为纯度评价标准，
+也就是只考虑重量不考虑其他因素时，钻石的平均价格就是 *VS2* 钻石价格。
+
+纯度为 *I1* 的钻石的 `lresid` 中位数接近于 -1，表明由于纯度不佳，相同重量下，
+*I1* 钻石的价格只有 *VS2* 基准钻石价格的二分之一（$2^{-1}$）。
+如果某钻石的 `lresid` 值为1，则说明高纯度使得其价格是相同重量 *VS2* 钻石的2倍（$2^1$）。
+
+### 构建更复杂的模型
+
+现在把颜色、切割工艺和纯度也纳入模型：
+```{r}
+mod_diamond2 <- lm(lprice ~ lcarat + color + cut + clarity, data = diamonds2)
+```
+
+加上原来的重量，现在共包含4个特征，为了通过图形展示这个模型：
+```{r}
+grid <- diamonds2 %>%
+  data_grid(cut, .model = mod_diamond2) %>%
+  add_predictions(mod_diamond2)
+grid
+```
+
+这里 `.model` 的意思是如果模型 `mod_diamond2` 需要没有明确提供的特征，`data_grid` 自动填充一个 *标准值*，
+对于数值型特征，取中位数，对于类别型特征，取最大成分（出现最多的那个类别）。
+
+图示切割工艺和价格（对数化处理后）之间的关系：
+```{r}
+ggplot(grid, aes(cut, pred)) +
+  geom_point()
+```
+
+去除所有4个特征的影响后，残差是这样的：
+```{r}
+diamonds2 <- diamonds2 %>%
+  add_residuals(mod_diamond2, "lresid2")
+
+ggplot(diamonds2, aes(lcarat, lresid2)) +
+  geom_hex(bins = 50)
+```
+
+主体接近白噪声，说明模型的解释程度令人满意，但少部分数据的 `lcarat2` 值超过了2，
+意味着这些钻石的价格偏差是模型解释正常值的4倍（$2^2$）。
+对于这种情况，常用的方法是把它们筛选出来看一看：
+```{r}
+diamonds2 %>%
+  filter(abs(lresid2) > 1) %>%
+  add_predictions(mod_diamond2) %>%
+  mutate(pred = round(2 ^ pred)) %>%
+  select(price, pred, carat:table, x:z) %>%
+  arrange(price)
+```
+
+包括如下步骤：
+
+1. 选出价格偏差超过 $[\frac12, 2]$ 倍正常值的钻石；
+
+1. 添加模型预测价格列；
+
+1. 将对数价格转换为原始价格并取整；
+
+1. 只保留价格、预测价格、重量、切割工艺、颜色、纯度等特征；
+
+1. 按实际价格排序；
+
+这些价格异常的钻石，既有被高估也有被低估的，如果我们的模型没有问题，就要检查数据是不是有问题，
+如果数据也没有错误，赶紧买进那些物美价廉的钻石吧。
+
+## 纽约机场日航班數受哪些因素影响？
+
+这个数据集记录了 2013 年纽约机场每次航班信息，
+观察每天航班数量变化规律：
+```{r}
+flights
+daily <- flights %>%
+  mutate(date = make_date(year, month, day)) %>%
+  group_by(date) %>%
+  summarise(n = n())
+daily
+ggplot(daily, aes(date, n)) +
+  geom_line()
+```
+
+### 星期变化的影响
+
+由于商务人士是航班顾客的主体，周末的航班数应该比较少，
+为了证实这一点，将某天按在一星期中的位置（day of week）分类：
+```{r}
+daily <- daily %>%
+  mutate(wday = wday(date, label = TRUE))
+ggplot(daily, aes(wday, n)) +
+  geom_boxplot()
+```
+
+将线性预测结果叠加到原始数据上：
+```{r}
+mod <- lm(n ~ wday, data = daily)
+
+grid <- daily %>%
+  data_grid(wday) %>%
+  add_predictions(mod, "n")
+
+ggplot(daily, aes(wday, n)) +
+  geom_boxplot() +
+  geom_point(data = grid, colour = "red", size = 4)
+```
+
+去掉周末影响后的偏差分布情况：
+```{r}
+daily <- daily %>%
+  add_residuals(mod)
+daily
+daily %>%
+  ggplot(aes(date, resid)) +
+  geom_ref_line(h = 0) +
+  geom_line()
+```
+
+按 day of week 绘制残差曲线：
+```{r}
+ggplot(daily, aes(date, resid, colour = wday)) +
+  geom_ref_line(h = 0) +
+  geom_line()
+```
+
+可以看到如果不考虑特殊日期航班数特别低造成的异常值，
+主要是周六的残差不太理想。
+
+筛选出航班明显偏少的日子：
+```{r}
+daily %>%
+  filter(resid < -100)
+```
+
+不难看出主要是节假日期间航班数明显减少，这就给上述异常值了一个比较令人满意的解释。
+
+下面通过拟合平滑曲线观察航班残差的长期变化规律：
+```{r}
+daily %>%
+  ggplot(aes(date, resid)) +
+  geom_ref_line(h = 0) +
+  geom_line(colour = "grey50") +
+  geom_smooth(se = FALSE, span = 0.20)
+```
+
+总体来看，仅仅使用 day of week 预测航班数，存在1月和12月偏低，而5～9月偏高的问题，
+我们需要找到更多因素来解释航班数的变化。
+
+### 不同季节的影响
+
+只绘制周六航班的变化情况：
+```{r}
+daily %>%
+  filter(wday == "Sat") %>%
+  ggplot(aes(date, n)) +
+    geom_point() +
+    geom_line() +
+    scale_x_date(NULL, date_breaks = "1 month", date_labels = "%b")
+```
+
+周六航班的阶段性增长可能与季节有关，
+将它写出函数的形式：
+```{r}
+term <- function(date) {
+  cut(date,
+    breaks = ymd(20130101, 20130605, 20130825, 20140101),
+    labels = c("spring", "summer", "fall")
+  )
+}
+
+daily <- daily %>%
+  mutate(term = term(date))
+
+daily %>%
+  filter(wday == "Sat") %>%
+  ggplot(aes(date, n, colour = term)) +
+  geom_point(alpha = 1/3) +
+  geom_line() +
+  scale_x_date(NULL, date_breaks = "1 month", date_labels = "%b")
+```
+
+以它为标准分析航班数随 day of week 的变化情况：
+```{r}
+daily %>%
+  ggplot(aes(wday, n, colour = term)) +
+    geom_boxplot()
+```
+
+按不同的季节分类拟合：
+```{r}
+mod1 <- lm(n ~ wday, data = daily)
+mod2 <- lm(n ~ wday * term, data = daily)
+
+daily %>%
+  gather_residuals(without_term = mod1, with_term = mod2) %>%
+  ggplot(aes(date, resid, colour = model)) +
+    geom_line(alpha = 0.75)
+```
+
+将季节和 day of week 综合考虑后，残差有减小趋势，但不明显。
+
+将季节和 day of week 综合考虑下的预测航班数与实际航班数叠加展示：
+```{r}
+grid <- daily %>%
+  data_grid(wday, term) %>%
+  add_predictions(mod2, "n")
+
+grid
+
+ggplot(daily, aes(wday, n)) +
+  geom_boxplot() +
+  geom_point(data = grid, colour = "red") +
+  facet_wrap(~ term)
+```
+
+预测值类似于某一组合下的平均数，对照原始数据的 box plot 图不难发现，由于异常点的存在，扭曲了整体分布情况，平均值缺乏代表性，
+下面我们用对异常值容忍度比较高的 `MASS::rlm()` 函数再来拟合一次：
+```{r}
+mod3 <- MASS::rlm(n ~ wday * term, data = daily)
+
+daily %>%
+  add_residuals(mod3, "resid") %>%
+  ggplot(aes(date, resid)) +
+  geom_hline(yintercept = 0, size = 2, colour = "white") +
+  geom_line()
+```
+
+与上面的 `mod2` 模型相比，本模型的残差更贴近于0值，说明此模型比较好的描述了季节和 day-of-week 对航班数的影响。
+且由于某些未知因素影响，1、2月份的实际值比预测值偏低。
+
+### 使用更柔软的模型
+
+上面我们用线性模型结合领域知识分析了航班数的变化规律，
+如果给模型更多的灵活度，可以直观地从数据中提取更多的规律，
+下面我们用自然样条取代线性模型，看看有什么效果：
+```{r}
+library(splines)
+mod_ns <- MASS::rlm(n ~ wday * ns(date, 5), data = daily)
+
+daily %>%
+  data_grid(wday, date = seq_range(date, n = 13)) %>%
+  add_predictions(mod_ns) %>%
+  ggplot(aes(date, pred, colour = wday)) +
+    geom_line() +
+    geom_point()
+```
+
+图中表达的信息与上面的线性模型一致：
+
+* 工作日航班数显著多于周末航班数，表明航班主体是是商务飞行；
+
+* 周日的航班显著多于周六，说明很多人需要为周一的工作而提前在周末赶赴工作地点；
+
+* 从季节上看，秋冬季节的航班少于春夏季节的航班数量。
+
+* 周六的航班数随季节起伏较大，一个原因是春秋两季学校假期让很多家庭选择坐飞机度假，
+  另一个原因是圣诞节和元旦周六坐飞机出行的人数很多；
+
+# 多模型分析方法
+
+机器学习使用数学工具分析数据集，选择算法拟合模型，最后得出结论，是数据科学家的工作；
+数据分析则关注大规模数据的获取、清洗、计算（相当于增强型的 SQL）和展示，是数据工程师的工作。
+打个不太恰当的比方，有点像 IT 领域的开发和运维，我们知道这两个领域的融合出现了 devops，
+那么机器学习和数据分析是否也能融合在一起，让算法助力数据分析呢？
+
+答案是可以：通过多模型方法实现。
+本章介绍了通过多模型方法，结合各种机器学习算法分析大数据集的方法，
+具体内容包括：
+
+* 如何综合运用多个简单模型解释复杂数据集；
+
+* 使用列表特征（*list-column*）技术将任何数据存储在 data frame 中，例如用一列保存一个线性模型；
+
+* 使用 *broom* 包将模型转换为 tidy data，从而使用各种数据处理技术分析 tidy data；
+
+## gapminder 数据集
+
+```{r}
+library(gapminder)
+gapminder
+```
+
+为每个国家绘制一条 *年——预期寿命* 关系曲线：
+```{r}
+gapminder %>%
+  ggplot(aes(year, lifeExp, group = country)) +
+    geom_line(alpha = 1/3)
+```
+
+以新西兰为例，使用前面介绍的 *模型-残差* 的方法分析年代和预期寿命间的关系：
+```{r}
+nz <- filter(gapminder, country == "New Zealand")
+nz %>%
+  ggplot(aes(year, lifeExp)) +
+  geom_line() +
+  ggtitle("Full data = ")
+
+nz_mod <- lm(lifeExp ~ year, data = nz)
+nz %>%
+  add_predictions(nz_mod) %>%
+  ggplot(aes(year, pred)) +
+  geom_line() +
+  ggtitle("Linear trend + ")
+
+nz %>%
+  add_residuals(nz_mod) %>%
+  ggplot(aes(year, resid)) +
+  geom_hline(yintercept = 0, colour = "white", size = 3) +
+  geom_line() +
+  ggtitle("Remaining pattern")
+```
+
+效果不错，现在的问题是，如何为每个国家创建分析模型？
+
+### 嵌套数据集 {#nesting}
+
+为每个国家创建分析模型，需要从总体数据集中按 `country` 特征拆分出不同的子数据集，
+`tidyr::nest` 函数是个合适的工具：
+```{r}
+by_country <- gapminder %>%
+  group_by(country, continent) %>%
+  nest()
+
+by_country
+```
+
+新增加的特征 `data` 的每一行都是一个完整的 data frame（更准确地说是 tibble），
+例如我们要查看亚洲国家阿富汗的数据：
+```{r}
+by_country$data[[1]]
+```
+
+所以 `nest()` 的作用是将一个每行是一个观测（一个国家在某一年份的预期寿命）的 data frame
+转换成了每行是一个 data frame（某个国家在所有年份中的预期寿命）的 data frame。
+
+### 列表特征
+
+要为每个国家创建模型，首先将模型包装在一个函数里：
+```{r}
+country_model <- function(df) {
+  lm(lifeExp ~ year, data = df)
+}
+```
+
+然后用 `purrr::map()` 将函数应用到每个列表元素上：
+```{r}
+models <- map(by_country$data, country_model)
+```
+
+Data frame 最大的优点是能够将相关的信息放在一起，
+如果能够将分析模型放到 `by_country` 中，就实现了将数据和模型整合到了一个 data frame里，
+这正好可以通过 `dplyr::mutate` 函数实现：
+```{r}
+by_country <- by_country %>%
+  mutate(model = map(data, country_model))
+by_country
+```
+
+这里 `map` 函数的 `data` 参数表示 `by_country$data`。
+
+这样就可以方便的对数据做筛选和排序了：
+```{r}
+by_country %>%
+  filter(continent == "Europe")
+by_country %>%
+  arrange(continent, country)
+```
+
+### 展开数据集 {#unnesting}
+
+为每个模型添加残差：
+```{r}
+by_country <- by_country %>%
+  mutate(
+    resids = map2(data, model, add_residuals)
+  )
+by_country
+```
+
+要绘制每个模型的残差图，首先将嵌套数据集展开成普通数据集：
+```{r}
+resids <- unnest(by_country, resids)
+resids
+```
+
+为这个普通数据集绘制残差图：
+```{r}
+resids %>%
+  ggplot(aes(year, resid)) +
+    geom_line(aes(group = country), alpha = 1 / 3) +
+    geom_smooth(se = FALSE)
+```
+
+按洲分组绘制残差图：
+```{r}
+resids %>%
+  ggplot(aes(year, resid, group = country)) +
+    geom_line(alpha = 1 / 3) +
+    facet_wrap(~continent)
+```
+
+不难发现非洲的残差比较高，说明现有的线性模型并不能完美解释这个大洲的预期寿命变化趋势。
+
+### 模型质量评估 {#model-quality}
+
+```{r}
+library(broom)
+glance(nz_mod)
+```
+
+采用 `mutata() + unnest()` 可以将上面的方法扩展到整个数据集上：
+```{r}
+by_country %>%
+  mutate(glance = map(model, broom::glance)) %>%
+  unnest(glance)
+```
+
+去掉其中的列表特征列：
+```{r}
+glance <- by_country %>%
+  mutate(glance = map(model, broom::glance)) %>%
+  unnest(glance, .drop = TRUE)
+glance
+```
+
+对所有模型按质量排序：
+```{r}
+glance %>%
+  arrange(r.squared)
+```
+
+似乎所有模型质量差的国家都在非洲，用散点图验证一下：
+```{r}
+glance %>%
+  ggplot(aes(continent, r.squared)) +
+    geom_jitter(width = 0.3)
+```
+
+重点研究模型质量最差（$R^2 \lt 0.25$）的几个国家：
+```{r}
+bad_fit <- filter(glance, r.squared < 0.25)
+
+gapminder %>%
+  semi_join(bad_fit, by = "country") %>%
+  ggplot(aes(year, lifeExp, colour = country)) +
+    geom_line()
+```
+
+不难推测1994年卢旺达种族大屠杀和近几十年艾滋病肆虐可能是造成这些国家人口预期寿命反常下降的重要原因。
+
+## 列表特征
+
+R data frame 对 列表特征支持不够好：
+```{r}
+data.frame(x = list(1:3, 3:5))
+```
+
+通过 `I()` 可以实现列表特征，但打印效果不好：
+```{r}
+data.frame(
+  x = I(list(1:3, 3:5)),
+  y = c("1, 2", "3, 4, 5")
+)
+```
+
+`tibble` 对列表特征的支持比较好，不会自动展开 list：
+```{r}
+tibble(
+  x = list(1:3, 3:5),
+  y = c("1, 2", "3, 4, 5")
+)
+```
+
+或者使用 `tribble` 也能达到相同的效果：
+```{r}
+tribble(
+   ~x, ~y,
+  1:3, "1, 2",
+  3:5, "3, 4, 5"
+)
+```
+
+列表特征一般作为数据处理流程的中间结果，将相关的数据组织在一起，而不是作为 R 函数的直接处理对象。
+基于列表特征的工作流程主要由以下3部分组成：
+
+1. 创建包含列表特征的数据集：使用 `nest()`、`summarise() + list()` 或者 `mutate()` 加上一个 `map()` 函数，详见 [创建列表特征](#create-lc)；
+
+1. 使用 `map()`、`map2()` 或者 `pmap()` 进一步转换这个数据集，参考 [模型质量评估](#model-quality) 中 `map()` 和 [展开数据集](#unnesting) 中的 `map2()` 函数；
+
+1. 使用简化方法将包含列表特征的数据集还原为普通数据集，见 [简化列表特征](#simp-lc)。
+
+## 创建列表特征 {#create-lc}
+
+有3种方法创建列表特征列：
+
+* `tidyr::nest()`:
+
+* `mutata()`:
+
+* `summarise`:
+
+注意函数返回结果中，所有元素的类型应该是一致的，虽然数据集本身不会检查元素类型的一致性，
+但为了后续使用映射函数不会出现异常，满足这一点是很有必要的。
+
+### 使用 `nest()` 函数
+
+`nest()` 可以通过两种方法生成特征列表，第一种是与 `group_by` 配合使用：
+参考 [嵌套数据集](#nesting) 中的 `by_country`：
+```{r}
+by_country
+```
+
+它的元素包含出 `group_by` index 之外的所有特征：
+```{r}
+by_country$data[[1]]
+```
+
+第二种方法是单独使用，将需要嵌套的特征作为参数：
+```{r}
+nest2 <- gapminder %>%
+  nest(year:gdpPercap)
+nest2$data[[1]]
+```
+
+可以看到要得到相同的结果，`nest()` 参数与前面方法 `group_by()` 的参数应该是互补的。
+
+### 使用向量函数
+
+使用 `mutate()` 添加/修改特征时，如果返回的是一个向量（而非标量），就会生成向量特征：
+```{r}
+df <- tribble(
+  ~x1,
+  "a,b,c",
+  "d,e,f,g"
+)
+
+df %>%
+  mutate(x2 = stringr::str_split(x1, ","))
+```
+
+使用 `unnest()` 展开向量特征，注意展开的方向是竖向的，也就是保持特征數不变，增加观测数：
+```{r}
+df %>%
+  mutate(x2 = stringr::str_split(x1, ",")) %>%
+  unnest()
+```
+
+最后可是使用 `purrr::invoke_map()` 函数生成列表特征：
+```{r}
+sim <- tribble(
+  ~f,      ~params,
+  "runif", list(min = -1, max = 1),
+  "rnorm", list(sd = 5),
+  "rpois", list(lambda = 10)
+)
+
+sim %>%
+  mutate(sims = invoke_map(f, params, n = 10))
+```
+
+注意 `sim$sims` 不完全是类型一致的，包含了实数向量和整数向量，
+但由于实数运算完全覆盖整数运算，所以这样处理是合理的。
+
+### 使用返回多值的 `summarise()` 函数
+
+`summarise()` 函数的经典用法是针对每一个分组生成一个标量形式的汇总值，
+例如要获得不同汽缸数各种车型的平均和最大燃油消耗率 (mpg)：
+```{r}
+mtcars %>%
+  group_by(cyl) %>%
+  summarise(mpg_mean = mean(mpg))
+mtcars %>%
+  group_by(cyl) %>%
+  summarise(mpg_max = max(mpg))
+```
+
+如果我们不仅关系燃油效率，还想知道它的分布情况呢？
+使用 `quantile()` 函数是个好方法，但它返回的是一个向量，不能直接作为 `summarise()` 函数的参数。
+要解决这个问题，向量特征是个不错的工具：
+```{r}
+mpg_quantile <- mtcars %>%
+  group_by(cyl) %>%
+  summarise(q = list(quantile(mpg)))
+mpg_quantile$q
+```
+
+展开这个数据集：
+```{r}
+unnest(mpg_quantile)
+```
+
+注意只有分组依据 (`cyl`) 和 向量特征 (`q`)。
+`quantile()` 函数默认采用四分位点，即 0%, 25%, 50%, 75% 和 100%，
+但也可以指定分位点位置，然后展开：
+```{r}
+probs <- c(0.01, 0.25, 0.5, 0.75, 0.99)
+mtcars %>%
+  group_by(cyl) %>%
+  summarise(p = list(probs), q = list(quantile(mpg, probs))) %>%
+  unnest()
+```
+
+增加的 `p` 列指明了分位数，提升了数据集的可读性和可操作性。
+
+### 基于命名列表
+
+普通 data frame 的结构相当于一个二维表格，特征名称作为一种 *元数据*，
+不能直接作为普通数据使用，在某些情况下很不方便。
+列表特征使我们突破了 data frame 的维数限制：data frame 只体现最高一维，
+所有 $n-1$ 维 *打包* 在列表特征的元素里。
+由于打包隐藏了数据结构的某些特征（主要是向量长度），
+使得包含向量特征的数据集比普通 data frame 具有更高的灵活性，
+例如下面的 `pack_data` 数据集，由于每个特征包含长度不同的向量，
+无法作为普通的 data frame 处理，通过打包过程变成了 data frame：
+
+```{r}
+pack_data <- list(
+  a = 1:5,
+  b = 3:4,
+  c = 8:19
+)
+
+hidim_df <- enframe(pack_data)
+hidim_df
+```
+
+而且可以将特征名称 `a,b,c` 作为函数参数参与计算，
+例如使用 `str_c()` 函数将将特征名称和数组第一个元素连接在一起：
+```{r}
+hidim_df %>%
+  mutate(
+    smry = map2_chr(name, value, ~ stringr::str_c(.x, ": ", .y[1]))
+  )
+```
+
+## 简化列表特征 {#simp-lc}
+
+处理完毕包含向量特征的数据集后，需要将结果收集到普通 data frame 中，
+根据每个向量最终计算结果形式的不同，存在两种情况：
+
+* 如果每个向量最终计算结果是一个标量，使用 `mutate()` 配合 `map_lgl()`, `map_int()`,
+  `map_dbl()`, `map_chr()` 等函数形成最终 data frame;
+
+* 如果每个向量最终计算结果仍然是一个向量，使用 `unnest()` 函数通过重复行的方法得到最终的 data frame。
+
+### 标量场景
+
+下面的代码演示了通过 `map_chr()` 和 `map_int()` 函数获取向量特征每个元素的类型和长度两个标量，
+并分别保存到两个特征中的过程：
+```{r}
+df <- tribble(
+  ~x,
+  letters[1:5],
+  3:9,
+  runif(8)
+)
+
+df %>% mutate(
+  type = map_chr(x, typeof),
+  length = map_int(x, length)
+)
+```
+
+通过新生成的 *类型* 特征，可以方便地对多类型列表做按类型筛选。
+
+`map_*()` 族函数不仅可以应用函数到特征上，例如上面的 `map_chr(x, typeof)`，
+还可以用于从数据集中取出特定的特征，
+例如下面的代码演示了从 `df` 数据集中取特征 `a` 和 `b` 形成新的数据集的方法：
+```{r}
+df <- tribble(
+  ~raw,
+  list(a = 1, b = 2),
+  list(a = 2, c = 4, d = 5)
+)
+df %>% mutate(
+  x = map_dbl(raw, "a"),
+  y = map_dbl(raw, "b", .null = NA_real_)
+)
+```
+
+### 向量场景
+
+`unnest()` 展开向量特征的方法是重复普通特征（不是向量特征的列），
+每个向量特征的元素成为新的一个观测，例如下面的代码中，
+第一个观测 `x = 1, y = 1:4` 被展开为4个观测：
+```{r}
+tibble(x = 1:2, y = list(1:4, 1))
+tibble(x = 1:2, y = list(1:4, 1)) %>% unnest()
+tibble(x = 1:2, y = list(1:4, 1)) %>% unnest(y)
+```
+
+如果没有参数指定要展开的列，`unnest()` 展开所有的向量特征列。
+
+如果要展开多个向量特征列，要保证每个元素的长度是一样的，否则将导致展开失败，
+例如下面的例子中观测 `x=1` 中，y 和 z 长度不一致：
+```{r}
+df1 <- tribble(
+  ~x, ~y,           ~z,
+   1, "a",         1:2,
+   2, c("b", "c"),   3
+)
+df1
+# Error: df1 %>% unnest(y, z)
+```
+
+如果长度一致就能展开成功：
+```{r}
+df2 <- tribble(
+  ~x, ~y,           ~z,
+   1, c("a", "b"), 1:2,
+   2, "c",           3
+)
+df2
+df2 %>% unnest(y, z)
+```
+
+## 使用 `broom` 包归整数据集
+
+`broom` 包主要提供了下列3种方法将包含向量特征的数据集转换为普通数据集：
+
+`glance()` 方法见 [模型质量评估](#model-quality)。
+
+下面的代码调用元函数 `tidy()` 将模型的计算结果转换为数据集，底层是调用了 `tidy.lm()`：
+```{r}
+tidy(nz_mod)
+```
+
+下面的代码调用元函数 `augment()` 将模型参数与原有特征整合在一起，底层调用了 `augment.lm()`：
+```{r}
+augment(nz_mod)
+```
+

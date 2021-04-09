@@ -1,0 +1,244 @@
+---
+title: "Python 测试技术"
+author: "大数据-李超"
+date: "2021-04-09"
+# date: "`r Sys.Date()`"
+output: 
+  html_document:
+    fig_caption: yes
+    highlight: haddock
+    number_sections: yes
+    theme: united
+    toc: yes
+    toc_depth: 6
+    toc_float:
+      collapsed: true
+      smooth_scroll: true
+---
+
+# 自动化测试：QA落地的关键
+
+## 从安全网到地图
+
+测试的关键要素：
+
+* 可重复性：软件不断变化，今天通过测试不代表明天也能通过；
+
+* 运行时间：周期运行的测试，要在规定时间内完成；
+
+* 覆盖率：保证覆盖率持续升高；
+
+* 闭环反馈；
+
+* 成本控制；
+
+初级阶段目标：安全网
+
+终极目标：地图
+
+为什么手工测试在软件行业不可行？
+
+## 测试驱动
+
+从柔性生产到测试驱动开发：
+
+* 传统软件开发流程；
+
+* 敏捷开发流程；
+
+## 持续集成
+
+现代软件产品研发的基石
+
+## 自动化白盒测试
+
+* 动态语言与测试；
+
+* 白盒测试框架：case -> suite -> module
+
+* 覆盖率的取舍；
+
+## 自动化黑盒测试
+
+* 站在操作系统的肩膀上；
+
+* DevOps：天生我才
+
+# 基于Python的自动化测试
+
+* 解释 vs 编译
+
+* 成本优势
+
+* 更快的测试-开发循环
+
+* 工具链的选择：开源社区，类型多样，文档完善，开发者背景和活跃度
+
+# Python 测试生态圈
+
+## 生态圈
+
+文档 + 测试 + 持续集成
+
+测试粒度的划分；
+
+## 文档测试：代码即文档
+
+可以包含不同级别的测试逻辑。
+
+执行测试：
+
+方式1（需要定义模块级运行代码）：`python doctest_demo.py -v`
+
+方式2（无需定义模块级运行代码）：`python -m doctest -v doctest_demo.py`
+
+## 单元测试
+
+1. 什么是单元测试：内存中的测试；
+
+1. 传统单元测试 unittest，优点：文件名可以任意指定，缺点：比较笨重；
+
+1. 函数式风格测试 pytest，优点：简洁、灵活、交互性好，内置调试功能；
+   缺点：命名规则有要求；
+
+## 属性测试：随机生成输入数据
+
+1. RLE 算法：[Run-length encoding](https://en.wikipedia.org/wiki/Run-length_encoding);
+
+1. 算法原理，运行编码和解码函数：`python hypo_test0.py`;
+
+1. 添加一个单点测试: `pytest hypo_test1.py`
+
+1. 有没有问题？添加属性测试：`pytest hypo_test2.py`
+
+1. 问题出在了哪里？
+
+1. 修改代码：
+
+1. 再次测试： `pytest hypo_test3.py`
+
+## Mock测试：走出实验室
+
+1. 为什么需要 Mock?
+
+1. 对第三方库的mock: 不使用 mock 的测试：
+   `python -m unittest mock_demo.module0_test.RmTestCase`
+
+1. with mock: `python -m unittest mock_demo.module0_test.RmMockTest`
+
+1. 对类实例的mock: 不使用 mock 的测试：
+   `python -m unittest mock_demo.module1_test.RmTestCase`
+
+1. with mock: `python -m unittest mock_demo.module1_test.RmMockTest`
+
+1. 对类实例的mock: 不使用 mock 的测试：
+   `python -m unittest mock_demo.module2_test.RmTestCase`
+
+1. with mock: `python -m unittest mock_demo.module2_test.RmMockTest`
+
+## 交付测试
+
+用户故事：
+
+In order to ...
+As a ...
+I want ...
+
+将需求团队整合进测试流程。
+
+实例演示：`behave`
+
+## 从持续集成到持续发布
+
+* CI: 全自动生产线
+
+* CD: 自动生产 + 自动物流
+
+流程编排与幂等性
+
+# 实战演练
+
+符合幂等性要求的测试系统：搭建和运行过程。
+
+## 环境搭建
+
+* 版本控制：Git
+
+* 虚拟机：[Virtualbox](https://www.virtualbox.org/)
+
+* 虚拟环境管理：[vagrant](https://www.vagrantup.com/)
+
+### Windows
+
+下载地址：
+
+* [Git Bash](https://gitforwindows.org/)
+
+* https://download.virtualbox.org/virtualbox/5.2.22/VirtualBox-5.2.22-126460-Win.exe
+
+* https://releases.hashicorp.com/vagrant/2.2.2/vagrant_2.2.2_x86_64.msi
+
+## 软件复用
+
+* 避免重复造轮子：复用 -> 抽象
+
+* 过程 -> 函数 -> 类 -> 包
+
+* Python 的包管理：环境隔离
+
+## 包管理
+
+为什么需要管理包：library hell;
+
+## 虚拟环境管理
+
+* conda: 全局环境，语言中立，完全独立；
+
+* pipenv: 项目环境，Python语言，依赖于系统Python解释器。
+
+## 运行测试
+
+1. 更新代码：`git clone https://gitee.com/charlize/training1208.git`
+
+1. 下载虚拟机模板并配置参数：见附录；
+
+1. 启动虚拟机：`vagrant up`
+
+1. 安装 Python 环境：见附录；
+
+1. 运行测试并评估结果。
+
+# 附录
+
+## 配置虚拟机参数
+
+```
+vagrant box add pyTestTraining ~/warez/pytest.box
+mkdir pytest; cd pytest
+cat << EOF > Vagrantfile
+Vagrant.configure("2") do |config|
+  config.vm.box = "pyTestTraining"
+  config.ssh.username = "ubuntu"
+  config.ssh.password = "ubuntu"
+  config.vm.provider "virtualbox" do |vb|
+    vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
+    vb.memory = "1024"
+  end
+end
+EOF
+```
+
+## 安装 Python 环境
+
+```
+vagrant up
+vagrant ssh
+sudo apt install python3-pip
+pip install pipenv
+cd /vagrant/tests
+pipenv install
+```
+
+## 制作虚拟机模板
+
+`vagrant.exe package --output pytest.box`

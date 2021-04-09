@@ -4,3 +4,5 @@ rsconnect/
 .Rproj.user
 .RData
 **/.ipynb_checkpoints/
+packrat/lib*/
+packrat/src/

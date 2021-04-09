@@ -1,0 +1,388 @@
+---
+title: "R 编码规范"
+author: "大数据-李超"
+date: "2021-04-09"
+# date: "`r Sys.Date()`"
+output: 
+  html_document:
+    fig_caption: yes
+    highlight: haddock
+    number_sections: yes
+    theme: united
+    toc: yes
+    toc_depth: 6
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+
+# 综述
+
+R 使用了 Java/C 基于大括号的自由编码风格，对不规范的编码格式容忍度较高。
+但为了提高代码可读性，开发者仍然应遵守社区的最佳实践规范。
+
+作为一种面向数据分析的编程语言，尽量使用 [tidyverse](http://tidyverse.org/) 包实现应用功能，
+配合使用 [styler](http://styler.r-lib.org/) 和 [lintr](https://github.com/jimhester/lintr)
+做格式化检查工具。
+
+# 命名规则
+
+有效的命名风格：
+
+* lowercase
+
+* lower_case_with_underscores
+
+* UPPERCASE
+
+* UPPER_CASE_WITH_UNDERSCORES
+
+* CapWords
+
+# 文件
+
+文件名使用 lower_case_with_underscores 风格，并以 *R* 作为扩展名：
+```
+# Good
+fit_models.R
+utility_functions.R
+
+# Bad
+fit models.R
+foo.r
+stuff.r
+```
+
+# 语法
+
+## 变量和函数名称
+
+变量和函数名使用 lower_case_with_underscores 风格，
+变量一般为名词，函数一般为动词：
+```
+# Good
+day_one
+day_1
+
+# Bad
+DayOne
+dayone
+```
+
+不要使用 `.` 作为名称内部分隔符。
+
+避免使用常用的函数名作为变量名，例如：
+```
+mean <- function(x) sum(x)
+```
+
+## 空格
+
+逗号前面不要有空格，后面保证有且只有一个空格：
+```
+# Good
+x[, 1]
+
+# Bad
+x[,1]
+x[ ,1]
+x[ , 1]
+```
+
+函数调用时，括号两侧不要有空格：
+```
+# Good
+mean(x, na.rm = TRUE)
+
+# Bad
+mean (x, na.rm = TRUE)
+mean( x, na.rm = TRUE )
+```
+
+`if`, `for`, `while` 语句的括号两侧保留一个空格：
+```
+if (debug) {
+  show(x)
+}
+
+# Bad
+if(debug){
+  show(x)
+}
+```
+
+函数定义时，参数列表和函数体中间保留一个空值：
+```
+# Good
+function(x) {}
+
+# Bad
+function (x) {}
+function(x){}
+```
+
+二元操作符两侧各保留一个空格：
+```
+# Good
+height <- (feet * 12) + inches
+mean(x, na.rm = 10)
+
+# Bad
+height<-feet*12+inches
+mean(x, na.rm=10)
+```
+
+行尾不要留有空格。
+
+## 代码块
+
+R 的代码块书写规则：
+
+* 左大括号是一行代码的结尾字符，不要单起一行；
+
+* 每层缩进使用两个空格；
+
+* 右大括号单起一行，且只有这一个字符；
+
+示例：
+```
+# Good
+if (y < 0 && debug) {
+  message("y is negative")
+}
+
+if (y == 0) {
+  if (x > 0) {
+    log(x)
+  } else {
+    message("x is negative or zero")
+  }
+} else {
+  y^x
+}
+
+test_that("call1 returns an ordered factor", {
+  expect_s3_class(call1(x, y), c("factor", "ordered"))
+})
+
+tryCatch(
+  {
+    x <- scan()
+    cat("Total: ", sum(x), "\n", sep = "")
+  },
+  interrupt = function(e) {
+    message("Aborted by user")
+  }
+)
+
+# Bad
+if (y < 0 && debug) {
+message("Y is negative")
+}
+
+if (y == 0)
+{
+    if (x > 0) {
+      log(x)
+    } else {
+  message("x is negative or zero")
+    }
+} else { y ^ x }
+```
+
+## 折行
+
+每行长度原则不超过80个字符，如果一个函数调用太长，写成每行一个参数的形式：
+```
+# Good
+do_something_very_complicated(
+  something = "that",
+  requires = many,
+  arguments = "some of which may be long"
+)
+
+# Bad
+do_something_very_complicated("that", requires, many, arguments,
+                              "some of which may be long"
+                              )
+```
+
+## 赋值
+
+使用 `<-` 给变量赋值，不要使用 `=`：
+```
+# Good
+x <- 5
+
+# Bad
+x = 5
+```
+
+## 分号
+
+不要在语句之间和语句结尾使用分号。
+
+## 引号
+
+当文本内没有双引号时，使用双引号引用文本，否则使用单引号：
+```
+# Good
+"Text"
+'Text with "quotes"'
+'<a href="http://style.tidyverse.org">A link</a>'
+
+# Bad
+'Text'
+'Text with "double" and \'single\' quotes'
+```
+
+## 注释
+
+在数据分析代码中，使用注释重要的发现和分析结果。
+如果需要通过注释表达代码的意图，尝试改写代码，尽量将意图体现在代码中。
+如果某些 why 不能很好地以代码的形式表达，可以记录在注释中，但不要在注释中写 what 和 how。
+如果注释比代码多，用 Rmarkdown 代替 R 脚本文件。
+
+# 函数返回
+
+只在提前返回时使用 `return()` 函数，否则使用 R 的“返回最后一个表达式”规则，不显式使用 `return()`：
+```
+# Good
+find_abs <- function(x) {
+  if (x > 0) {
+    return(x)
+  }
+  x * -1
+}
+add_two <- function(x, y) {
+  x + y
+}
+
+# Bad
+add_two <- function(x, y) {
+  return(x + y)
+}
+```
+
+`return()` 语句单独写一行：
+```
+# Good
+find_abs <- function(x) {
+  if (x > 0) {
+    return(x)
+  }
+  x * -1
+}
+
+# Bad
+find_abs <- function(x) {
+  if (x > 0) return(x)
+  x * -1
+}
+```
+
+# 管道操作符
+
+管道操作符左侧有一个空格，右侧是行尾，不要加空格，原则上每行一个管道操作：
+```
+# Good
+iris %>%
+  group_by(Species) %>%
+  summarize_if(is.numeric, mean) %>%
+  ungroup() %>%
+  gather(measure, value, -Species) %>%
+  arrange(value)
+
+# Bad
+iris %>% group_by(Species) %>% summarize_all(mean) %>%
+ungroup %>% gather(measure, value, -Species) %>%
+arrange(value)
+```
+
+如果一个表达式中只有一个管道操作，且后续不存在扩展的可能，改成普通函数形式：
+```
+# Good
+arrange(iris, Species)
+
+# Bad (when no plan to expand it later on)
+iris %>% 
+  arrange(Species)
+```
+
+参与管道操作的函数如果没有参数，`magrittr` 允许不写括号，不要使用这一特性：
+```
+# Good
+x %>% 
+  unique() %>%
+  sort()
+
+# Bad
+x %>% 
+  unique %>%
+  sort
+```
+
+通过管道为变量赋值：
+```
+iris_long <- iris %>%
+  gather(measure, value, -Species) %>%
+  arrange(-value)
+```
+
+不要使用 `%<>%` 操作符：
+```
+# Good
+x <- x %>% 
+  abs() %>% 
+  sort()
+  
+# Bad
+x %<>%
+  abs() %>% 
+  sort()
+```
+
+# 编辑器整合
+
+在 RStudio 中，
+主菜单 Tools > Global Options > Code > Diagnostics > R Diagnostics 下勾选所有选项。
+
+这样每次保存文件后，Editor 窗口左侧将显示代码格式问题，
+包括语法错误、格式错误、赋值但未使用的变量、未赋值就使用的变量等。
+
+# 文档
+
+R 的 [roxygen2](https://github.com/klutometis/roxygen) 类似于 Java 的 JavaDoc，
+将代码中符合指定格式的代码注释转换为 HTML 格式文档。
+
+# 环境和依赖管理
+
+R 的 [packrat](https://rstudio.github.io/packrat/) 大致相当于 Java 的 Maven 和 Python 的 pipenv。
+
+最简工作流程：
+```
+library(packrat)
+init("~/docs/myproject")  # initialize project scaffold
+install.packages('rmarkdown')
+install.packages('tidyverse')
+status()
+snapshot()   # download package source code into packrat/src
+```
+
+`packrat/src` 目录下保存依赖库的源码压缩包，库版本保存在 `packrat/packrat.lock` 文件中，
+配置信息保存在 `packrat/packrat.opts` 文件中。
+
+`packrat` 默认会把压缩的源码包提交到版本控制系统中，当在新环境中 clone 出这个代码库并用 RStudio 打开这个 R Project 时，
+会自动在项目私有环境中安装 packrat，在 RStudio 中执行下面的命令重建环境：
+```
+library(packrat)
+status()  # optional
+restore()
+```
+
+使用 `install.packages()` 安装新的依赖库后，
+执行 `snapshot()` 会下载这些依赖库的源码压缩包到 `packrat/src` 目录下。
+并更新 `packrat/packrat.lock` 文件。
+
+如果当前环境中不包含所有被 snapshot 的 package，`status()` 会报告，
+如果新安装的包还没有 snapshot，`status()` 不会报告。

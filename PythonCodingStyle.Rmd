@@ -1,0 +1,179 @@
+---
+title: "Python 编码规范"
+author: "大数据-李超"
+date: "2021-04-09"
+# date: "`r Sys.Date()`"
+output: 
+  html_document:
+    fig_caption: yes
+    highlight: haddock
+    number_sections: yes
+    theme: united
+    toc: yes
+    toc_depth: 6
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+
+# 综述
+
+Python 语言最明显的特征之一是用缩进量表示从属关系，没有采用 Java, C 用括号定义作用域的自由书写风格。
+所以 Python 对代码格式的要求十分严格，社区发展出了完整的编码规范和丰富的检查和修复工具，并能够整合到几乎所有主流编辑器中。
+
+编码规范在提升代码质量和可读性、降低维护成本等方面发挥了核心作用，但如果没有相应的工具链帮助其落地，很难真正产生效果，本文第3、4节专门论述如何搭建可用的工具链。
+
+Python 社区不鼓励对编码规范做人工审查，因为人工审查存在如下问题：
+* 成本高：需要人力和时间做代码审查；
+* 效果差：很难避免主观判断和遗漏；
+* 事后审查：反馈周期长，不能培养开发者良好的编码习惯；
+
+由于上述原因，大多数人工审查最后都会被废弃，或者流于形式，无法产生应有的效果。所以社区的最佳实践是通过工具链做自动编码审查，解决规范的落地问题。
+
+本规范适用于 Python 3.6 及以上版本。
+
+# 编码规范
+
+Python 的编码规范由社区官方组织 [Python Software Foundation](https://www.python.org/psf/) (PSF)
+发布的 Python Enhancement Proposal (PEP) 规范文档中的 [PEP 8](https://www.python.org/dev/peps/pep-0008/) 定义，
+适用于所有 Python 开发场景。
+
+Docstring 规范见 [PEP 257](https://www.python.org/dev/peps/pep-0257/)。
+
+## 核心原则
+
+* 程序是由一系列函数和类型 (type) 构成的，尽量使用 expression 代替 statement；
+
+* FP 优于 OOP，尽量不要使用类 (class) 和继承关系；
+
+* 尽量使用不可变 (immutable) 数据结构，不修改已有变量，而是通过函数调用返回新的变量；
+
+* 尽量不使用 for/while 循环结构，代之以 FP 风格的 `map`, `reduce`, `group_by` 等；
+
+* 一个有明确业务含义的动作，尽量使用一行代码实现，如果无法实现，通过定义一个语义明确的函数实现；
+
+* 变量/函数的命名应具备明确的业务含义，不要使用有误导性的变量名称；
+
+* 任何名称（包、模块、函数、类、变量）中尽量使用英文及英文缩写命名，不要使用汉语拼音、拼音首字母缩写以及拼音-英文混合命名；
+
+* 避免魔法数字，将数字定义为常量，常量的命名应具备明确的业务含义；
+
+* 代码嵌套层次不超过3层；
+
+* 单行代码长度不超过 80 个字符；
+
+* 避免使用全局变量；
+
+* 保证代码可读性：使用 docstring 注释模块和函数；
+
+* 保证代码正确性：为函数添加 doctest，并保证 doctest 能够通过测试；
+
+## 命名规则
+
+有效的命名风格：
+
+* lowercase
+* lower_case_with_underscores
+* UPPERCASE
+* UPPER_CASE_WITH_UNDERSCORES
+* T: 单个大写字母
+* CapWords
+
+某些语言可能会使用其他命名风格，例如 mixedCase, Variable-Name, Class_Name, b 等，
+但这些风格 Python 不推荐使用。
+
+基本命名规则：
+
+* Package and Module: 尽量使用 lowercase，可以使用 lower_case_with_underscores
+
+* Variable: lowercase 或者 lower_case_with_underscores
+
+* Function and method: lowercase 或者 lower_case_with_underscores
+
+* Constants: UPPERCASE 或者 UPPER_CASE_WITH_UNDERSCORES
+
+* Type variable: T 或者 CapWords
+
+* Class: CapWords
+
+## 空格使用规范
+
+括号两侧不加空格：
+```{py}
+Right: spam(ham[1], {eggs: 2})
+Wrong: spam( ham[ 1 ], { eggs: 2 } )
+Right: dct['key'] = lst[index]
+Wrong: dct ['key'] = lst [index]
+```
+
+冒号、逗号、分号前不加空格：
+```{py}
+Right: if x == 4: print x, y; x, y = y, x
+Wrong: if x == 4 : print x , y ; x , y = y , x
+```
+
+函数和括号间不加空格：
+```{py}
+Right: spam(1)
+Wrong: spam (1)
+```
+
+操作符两侧加空格：
+```{py}
+Right: a = 1 + 2
+Wrong: a=1+2
+```
+
+参数赋值的等号两侧不加空格：
+```{py}
+def complex(real, imag=0.0):
+    return magic(r=real, i=imag)
+```
+
+不要写成 `imag = 0.0`.
+
+
+# 规范检查和格式化工具
+
+Python 开发者使用 linter 发现编码中的问题，给出错误位置和类型（错误码），
+由于大部分问题都有简单直接的修复方法，为了进一步提高效率，社区开发出了 formatter 自动修复无需人工干预就能修复的问题。
+
+Linter 查找两大类问题：
+
+* 逻辑问题：例如使用未被赋值的变量；
+
+* 风格问题：不符合 PEP 8 和 257 的书写方法。
+
+Linter 推荐使用 [flake8](http://flake8.pycqa.org/en/latest/)，它能够同时检查上面两类错误，
+并给出 [错误编码](https://flake8.readthedocs.io/en/2.5.5/warnings.html)。
+
+flake8 默认不做命名风格检查，需要安装插件 [pep8-naming](https://pypi.org/project/pep8-naming/)
+实现命名规则检查。
+
+Formatter 推荐使用 Google 的 [yapf](https://github.com/google/yapf)，定制性好，能够很好地和 flake8 整合在一起。
+
+# 编辑器整合
+
+编辑器整合工具在编辑器后台运行 linter 和 formatter，使开发者在编写代码时即时发现和修复问题。
+
+## vim
+
+推荐使用 [neovim](https://neovim.io/) 作为编辑器，使用 [vim-plug](https://github.com/junegunn/vim-plug) 作为插件管理工具，使用 [ALE](https://github.com/w0rp/ale) 作为异步 linter 引擎，然后通过如下方式支持 linter 和 formatter:
+```
+let g:ale_enabled = 1
+let b:ale_linters = {'python': ['flake8']}
+let b:ale_fixers = {'python': ['yapf']}
+Plug 'w0rp/ale'
+```
+
+# 编码最佳实践
+
+* 用 `logging.debug` 取代用于 debug 和调试的 `print` 语句；
+
+* 导入外部文件时尽量使用相对路径，代码任何位置，包括注释中，不允许出现个人开发环境的绝对文件路径；
+
+# 附录
+
+Q: 为什么 Python 采用缩进语法？
+
+A: 与括号语法相比，用缩进表示作用域符合人类阅读文本时对语义群的划分。体现了 Python 语言重视代码可读性，认为可读性比编译器解析方便更重要的设计思想。
