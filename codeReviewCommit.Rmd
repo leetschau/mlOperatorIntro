@@ -1,0 +1,122 @@
+---
+title: "代码提交与评审"
+author: "大数据-李超"
+date: "2021-04-12"
+output: 
+  html_document:
+    fig_caption: yes
+    highlight: haddock
+    number_sections: yes
+    theme: united
+    toc: yes
+    toc_depth: 6
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+
+# 概述
+
+## 收集问题
+
+* 编写、发布哪些语言的代码：R/Python/JavaScript
+* 使用哪种 editor 或者 IDE 作为开发环境？
+* 如何执行版本控制操作（例如 pull, commit, push）：命令行 or IDE 菜单？
+* 希望了解版本控制的哪些问题？
+
+## 版本控制基本概念
+
+### git 基本概念
+
+* repo, stage, working directory
+* local, remote
+
+# 有效的版交说明
+
+Commit message 的作用：让每一行代码讲述历史。最重要的产品文档。
+
+# 协作模式
+
+## Central Repo
+
+```
+git add
+git commit
+git push
+git pull --rebase
+git push
+```
+
+Ref:
+[Comparing Workflows])(https://www.atlassian.com/git/tutorials/comparing-workflows)
+
+## Feature branches
+
+每个特征使用一个分支，将特征分支 push 到 central repo。
+
+开发过程中的 commit push 到 remote repo 对应的 feature branch 上。
+
+开发完成后发起 PR 请求 merge 到 master 上，相关开发者接到通知，可以评论代码，
+也可以 clone 此 branch 修改代码。
+
+Ref:
+[Git Feature Branch Workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/feature-branch-workflow)
+
+## git flow
+
+### 基本概念
+
+* master: 发布分支，上面的 tag 作为版本号
+* develop: 特征收集分支
+* release: 短期分支，专为某次发布服务，合并回 master 和 develop
+* hotfix: 短期分支，专为某次发布服务，基于 master，合并回 master 和 develop
+* feature-xxx: 短期分支，专为某个功能开发，功能完成后合并回 develop
+
+与 feature branches 模式的区别：特征分支基于 develop 分支而非 master 分支：
+从 develop 创建，合并回 develop。
+
+当 develop 满足发布版本的特征后，创建 release 分支，此分支只接收发布相关的 commit，
+例如 bug fix，文档完善等。发布到 master 分支，并合并回 develop 分支。
+
+优点：发布版本和特征开发并行。
+
+### Installation
+```
+brew install git-flow  # on Mac
+apt install git-flow   # on Linux
+```
+
+Ref: [Gitflow Workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow)
+
+## Folk based workflow
+
+去中心化，每个开发者都有两个 repo：本地的私有库和远端的公开库，多见于开源项目。
+与其他协作方式相比，不需要开发者有中心库写权限，maintainer 负责审核所有开发者的 PR，
+并写入到中心库中。
+
+开发者的第一个动作不是 clone，而是 fork。
+
+# 工作流程描述
+
+1. 打开 commit template 模板，填写关键内容，提交
+1. 自动开始 build test
+1. push 到代码库
+1. Reviewer 审核代码，
+1. 自动开始 integral test
+
+# 代码提交
+
+* Commit Message 格式
+
+# 代码评审
+
+# 存在问题
+
+* 自动生成 commit 模板：
+* 本地 pre-commit 检查
+
+* 与 RStudio 整合
+
+# References
+
+* [Gitlab webhooks](https://docs.gitlab.com/ee/user/project/integrations/webhooks.html)
