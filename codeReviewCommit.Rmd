@@ -1,5 +1,5 @@
 ---
-title: "代码提交与评审"
+title: "开发协作与产品发布"
 author: "大数据-李超"
 date: "2021-04-12"
 output: 
@@ -15,29 +15,168 @@ output:
       smooth_scroll: false
 ---
 
-# 概述
+# Workflow Overview
 
-## 收集问题
+![Workflow based on git-flow](https://numergent.com/images/dev/git-flow.png)
 
-* 编写、发布哪些语言的代码：R/Python/JavaScript
-* 使用哪种 editor 或者 IDE 作为开发环境？
-* 如何执行版本控制操作（例如 pull, commit, push）：命令行 or IDE 菜单？
-* 希望了解版本控制的哪些问题？
+发布一个版本：
 
-## 版本控制基本概念
+1. Developer 创建新的 feature 分支，在上面实现功能，每次 commit 前进行本地 lint 和 test（可选）
+1. Push feature 分支到 central repo
+1. Server hook 触发 feature 分支上的 lint 和 test
+1. Reviewer 在 gitlab web 界面上查看代码变更和自动测试的运行结果
+1. 通过代码审核和测试后 (reviewer 或者 developer) merge feature 到 develop 分支
+1. Push develop 分支后自动运行 lint, user test, deploy on staging server
+1. Feature 分支满足发布版本要求后，发布到 master 分支，自动执行 user test 和 deploy on beta server
+1. beta 问题修正，重复前面的过程直到符合正式发布标准
+1. 发布到 production server
 
-### git 基本概念
+# Introduction
 
-* repo, stage, working directory
-* local, remote
+## Why We Need VCS
 
-# 有效的版交说明
+* 安全网：版本保存与回退
+* 协作工具：并行开发，分支与合并
+* 质量保证：代码评审和职责确定
+* 持续集成/持续发布
 
-Commit message 的作用：让每一行代码讲述历史。最重要的产品文档。
+## Basic Concepts & Commands
 
-# 协作模式
+* Repository
+* Local vs remote
+* Working directory, index(stage), local repository
+* Codes as documents
 
-## Central Repo
+参考 [git simple guide](https://rogerdudler.github.io/git-guide/)。
+
+## git ignore
+
+### Rationale
+
+* 保持 `git diff` 的有效性
+* 保持代码自洽
+
+实践中，所有非手工编写文件都尽量不进入版本控制系统：
+* 二进制文件
+* 程序生成的文件
+
+### Examples
+
+* .DS_Store for macOS
+* .Rhistory, .Rproj.user/, .RData, .nb.html for RStudio & Rmd
+* `**/__pycache__/` for Python project
+* .ipynb, .ipynb_checkpoints for Jupyter notebook
+* .idea/workspace.xml, .idea/usage.statistics.xml, .idea/*.iml for JetBrains IDE family, such as PyCharm, WebStorm, etc
+
+辅助工具：[gitignore.io](https://www.toptal.com/developers/gitignore)
+
+### For Binary Files
+
+常见处理方法：
+
+* 提交到 VCS 中。优点：实施难度低；缺点：代码库质量低
+* 构建过程中由 CI?CD 系统提供。优点：保持代码库质量、可移植；缺点：代码库部署完整性不足
+* 使用 [git-lfs](https://git-lfs.github.com/) 处理非手工生成文件。优点：兼顾代码库质量和部署完整性；缺点：需要安装 git-lfs
+
+# Commit Message
+
+Commit message 的作用：
+
+让每一行代码讲述历史。最重要的产品文档。
+
+让 `git log`, `git diff` 和 `git blame` 充分发挥作用。
+
+## Gommit Message Template
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### type
+
+What kind of action is performed in this commit?
+
+常用标签：
+
+* feat: 新功能
+* fix: 修复 bug
+* docs: 添加/更新文档
+* style: 更新代码格式
+* refactor: 重构代码
+* perf: 改善性能
+* test: 添加/更新测试代码
+
+### scope
+
+What's the object of the action?
+
+改动的目标是什么？
+
+### subject
+
+What action is performed in this commit?
+
+对本次提交的一句话说明，句尾不加句号
+
+### body
+
+Why and how of `<subject>`?
+
+### footer
+
+Optional, related issue(s).
+
+### Examples
+
+```
+feat(backend): 实现了用户购物车基本功能
+
+通过将购买服务加入购物车中，方便用户使用优惠券等提升购物体验
+
+Fix #233
+```
+
+# Toolchain
+
+## Local VCS hook
+
+* prepare-commit-msg：定制 message template
+
+* pre-commit: 可选的本地测试和格式检查
+
+* commit-msg: 对提交的信息进行格式检查
+
+## Server hook
+
+### Gitlab CI/CD
+
+编写 .gitlab-ci.yml 文件，自动运行
+
+优点：功能强大，可以对触发条件做精细控制，是代码库的一部分，方便管理
+
+缺点：绑定 gitlab 平台
+
+### Git Server hooks
+
+* pre-receive: 接收 push 前执行，常用于格式检查等
+* post-receive: 接收 push 后执行，常用于部署服务
+* update: 针对某个 branch 做相应的动作
+
+优点：任何 git 仓库都可用
+
+缺点：需要有服务器文件系统读写权限，不是代码库的一部分，需要单独维护
+
+### Gitlab webhook
+
+需要单独编写 web 服务执行相关动作，比其他方式略重。
+
+# Collabration Pattern
+
+## Central Repository
 
 ```
 git add
@@ -46,9 +185,6 @@ git push
 git pull --rebase
 git push
 ```
-
-Ref:
-[Comparing Workflows])(https://www.atlassian.com/git/tutorials/comparing-workflows)
 
 ## Feature branches
 
@@ -59,14 +195,12 @@ Ref:
 开发完成后发起 PR 请求 merge 到 master 上，相关开发者接到通知，可以评论代码，
 也可以 clone 此 branch 修改代码。
 
-Ref:
-[Git Feature Branch Workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/feature-branch-workflow)
 
-## git flow
+## git-flow
 
-### 基本概念
+### Concepts
 
-* master: 发布分支，上面的 tag 作为版本号
+* master: 发布分支（只包含可发布的代码），commit tag 作为版本号
 * develop: 特征收集分支
 * release: 短期分支，专为某次发布服务，合并回 master 和 develop
 * hotfix: 短期分支，专为某次发布服务，基于 master，合并回 master 和 develop
@@ -86,8 +220,6 @@ brew install git-flow  # on Mac
 apt install git-flow   # on Linux
 ```
 
-Ref: [Gitflow Workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow)
-
 ## Folk based workflow
 
 去中心化，每个开发者都有两个 repo：本地的私有库和远端的公开库，多见于开源项目。
@@ -96,27 +228,13 @@ Ref: [Gitflow Workflow](https://www.atlassian.com/git/tutorials/comparing-workfl
 
 开发者的第一个动作不是 clone，而是 fork。
 
-# 工作流程描述
-
-1. 打开 commit template 模板，填写关键内容，提交
-1. 自动开始 build test
-1. push 到代码库
-1. Reviewer 审核代码，
-1. 自动开始 integral test
-
-# 代码提交
-
-* Commit Message 格式
-
-# 代码评审
-
-# 存在问题
-
-* 自动生成 commit 模板：
-* 本地 pre-commit 检查
-
-* 与 RStudio 整合
-
 # References
 
 * [Gitlab webhooks](https://docs.gitlab.com/ee/user/project/integrations/webhooks.html)
+* [Git Feature Branch Workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/feature-branch-workflow)
+* [Gitflow Workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow)
+* [Comparing Workflows](https://www.atlassian.com/git/tutorials/comparing-workflows)
+* [Server hooks](https://docs.gitlab.com/ee/administration/server_hooks.html)
+* [How To Use Git Hooks To Automate Development and Deployment Tasks](https://www.digitalocean.com/community/tutorials/how-to-use-git-hooks-to-automate-development-and-deployment-tasks)
+* [How to manage projects under Version Control Systems](https://intellij-support.jetbrains.com/hc/en-us/articles/206544839-How-to-manage-projects-under-Version-Control-Systems)
+* []()
