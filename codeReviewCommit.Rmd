@@ -96,7 +96,7 @@ Commit message 的作用：
 <footer>
 ```
 
-### type
+### Keyword: type
 
 What kind of action is performed in this commit?
 
@@ -110,23 +110,23 @@ What kind of action is performed in this commit?
 * perf: 改善性能
 * test: 添加/更新测试代码
 
-### scope
+### Keyword: scope
 
 What's the object of the action?
 
 改动的目标是什么？
 
-### subject
+### Keyword: subject
 
 What action is performed in this commit?
 
 对本次提交的一句话说明，句尾不加句号
 
-### body
+### Keyword: body
 
 Why and how of `<subject>`?
 
-### footer
+### Keyword: footer
 
 Optional, related issue(s).
 
@@ -219,6 +219,41 @@ git push
 brew install git-flow  # on Mac
 apt install git-flow   # on Linux
 ```
+
+### Working Demo
+
+初始化一个 git flow 项目，全部选择默认值：
+```{sh}
+$ python -m venv .env
+$ . .env/bin/activate
+$ pip install ...  # config Python virtualenv
+$ django-admin startproject messenger
+$ cd messenger
+
+$ git flow init
+Initialized empty Git repository in /home/leo/Documents/messenger/.git/
+No branches exist yet. Base branches must be created now.
+Branch name for production releases: [master]
+Branch name for "next release" development: [develop]
+
+How to name your supporting branch prefixes?
+Feature branches? [feature/]
+Bugfix branches? [bugfix/]
+Release branches? [release/]
+Hotfix branches? [hotfix/]
+Support branches? [support/]
+Version tag prefix? []
+Hooks and filters directory? [/home/leo/Documents/messenger/.git/hooks]
+# on develop branch
+
+$ git flow feature start naive-func
+# on feature/naive-func branch
+
+
+```
+
+这时自动进入 develop 分支。
+
 
 ## Folk based workflow
 
