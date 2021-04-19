@@ -222,14 +222,24 @@ apt install git-flow   # on Linux
 
 ### Working Demo
 
-初始化一个 git flow 项目，全部选择默认值：
-```{sh}
+全局级别：clone hook repo，设置 git hook 全局路径（可选）；
+
+项目级别：初始化 git flow 项目，设置项目环境：
+```
+$ cd ~/Documents
+$ git clone git@123.56.15.24:datascience/git-template.git
+$ git config --global init.templateDir '~/Documents/git-template'
+# or `git config init.templateDir ~/Documents/git-template` on repository level
+
 $ python -m venv .env
 $ . .env/bin/activate
-$ pip install ...  # config Python virtualenv
+$ pip install Django ipython ptpython pipdeptree flake8 pep8-naming yapf pynvim  # config Python virtualenv
 $ django-admin startproject messenger
 $ cd messenger
 
+$ pipdeptree -f > requirements.txt
+$ git flow init -d
+# or use interactive mode:
 $ git flow init
 Initialized empty Git repository in /home/leo/Documents/messenger/.git/
 No branches exist yet. Base branches must be created now.
@@ -248,12 +258,9 @@ Hooks and filters directory? [/home/leo/Documents/messenger/.git/hooks]
 
 $ git flow feature start naive-func
 # on feature/naive-func branch
-
-
 ```
 
-这时自动进入 develop 分支。
-
+这时自动进入 feature 分支。
 
 ## Folk based workflow
 
@@ -272,4 +279,3 @@ $ git flow feature start naive-func
 * [Server hooks](https://docs.gitlab.com/ee/administration/server_hooks.html)
 * [How To Use Git Hooks To Automate Development and Deployment Tasks](https://www.digitalocean.com/community/tutorials/how-to-use-git-hooks-to-automate-development-and-deployment-tasks)
 * [How to manage projects under Version Control Systems](https://intellij-support.jetbrains.com/hc/en-us/articles/206544839-How-to-manage-projects-under-Version-Control-Systems)
-* []()
