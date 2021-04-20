@@ -229,11 +229,10 @@ apt install git-flow   # on Linux
 $ cd ~/Documents
 $ git clone git@123.56.15.24:datascience/git-template.git
 $ git config --global init.templateDir '~/Documents/git-template'
-# or `git config init.templateDir ~/Documents/git-template` on repository level
 
 $ python -m venv .env
 $ . .env/bin/activate
-$ pip install Django ipython ptpython pipdeptree flake8 pep8-naming yapf pynvim  # config Python virtualenv
+$ pip install Django pytest-django ipython ptpython pipdeptree flake8 pep8-naming yapf pynvim  # config Python virtualenv
 $ django-admin startproject messenger
 $ cd messenger
 
@@ -255,6 +254,8 @@ Support branches? [support/]
 Version tag prefix? []
 Hooks and filters directory? [/home/leo/Documents/messenger/.git/hooks]
 # on develop branch
+
+# here run `git config init.templateDir ~/Documents/git-template` to set template for only this repo
 
 $ git flow feature start naive-func
 # on feature/naive-func branch
