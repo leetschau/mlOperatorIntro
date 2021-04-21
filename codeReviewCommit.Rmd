@@ -26,8 +26,8 @@ output:
 1. Server hook 触发 feature 分支上的 lint 和 test
 1. Reviewer 在 gitlab web 界面上查看代码变更和自动测试的运行结果
 1. 通过代码审核和测试后 (reviewer 或者 developer) merge feature 到 develop 分支
-1. Push develop 分支后自动运行 lint, user test, deploy on staging server
-1. Feature 分支满足发布版本要求后，发布到 master 分支，自动执行 user test 和 deploy on beta server
+1. Push develop 分支后自动运行 lint, build, test 以及 deploy on staging server
+1. Feature 分支满足发布版本要求后，发布到 master 分支，自动执行 build, test 和 deploy on beta server
 1. beta 问题修正，重复前面的过程直到符合正式发布标准
 1. 发布到 production server
 
@@ -154,13 +154,67 @@ Fix #233
 
 ### Gitlab CI/CD
 
+在指定的容器（通过 `image` 关键字）中执行 CI/CD 动作，一般由 build, test, deploy 三步组成。
+
 编写 .gitlab-ci.yml 文件，自动运行
 
 优点：功能强大，可以对触发条件做精细控制，是代码库的一部分，方便管理
 
 缺点：绑定 gitlab 平台
 
+#### 整体架构
+
+* Simple: build > test > deploy 三段模式
+* DAG: 有向无环图，
+* Double Tier: 支持局部构建
+
+#### Simple Build
+
+stages 间顺序执行，stage 内各个 job 并行执行。
+前面 stage 中所有 job 运行完成后，开始下一个 stage。示例：
+```
+stages:
+  - build
+  - test
+  - deploy
+
+image: alpine
+
+job1:
+  stage: build
+  script:
+    - echo "step 1"
+    - echo "step 2"
+
+job2:
+  stage: test
+  script:
+    - echo "run test 1"
+    - echo "run test 2"
+
+job3:
+  stage: deploy
+  script:
+    - echo "run job 1"
+    - echo "run job 2"
+```
+
+顶层标签是 <job-name> or `stages` or `workflow` or `image`.
+
+`workflow` 一般包含 `rules` 实现对执行场景的精确控制，例如：
+```
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      when: never
+    - when: always
+```
+
 ### Git Server hooks
+
+与 local hook 一样保存在 .git/hooks 文件夹中，包括：
 
 * pre-receive: 接收 push 前执行，常用于格式检查等
 * post-receive: 接收 push 后执行，常用于部署服务
@@ -228,7 +282,7 @@ apt install git-flow   # on Linux
 ```
 $ cd ~/Documents
 $ git clone git@123.56.15.24:datascience/git-template.git
-$ git config --global init.templateDir '~/Documents/git-template'
+$ git config --global core.hooksPath '~/Documents/git-template/hooks'
 
 $ python -m venv .env
 $ . .env/bin/activate
@@ -255,7 +309,7 @@ Version tag prefix? []
 Hooks and filters directory? [/home/leo/Documents/messenger/.git/hooks]
 # on develop branch
 
-# here run `git config init.templateDir ~/Documents/git-template` to set template for only this repo
+# here run `git config core.hooksPath ~/Documents/git-template/hooks` to set template for only this repo
 
 $ git flow feature start naive-func
 # on feature/naive-func branch
