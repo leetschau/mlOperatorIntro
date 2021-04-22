@@ -144,19 +144,91 @@ Fix #233
 
 ## Local VCS hook
 
-* prepare-commit-msg：定制 message template
+### 提交前检查
 
-* pre-commit: 可选的本地测试和格式检查
+在 hook 文件 *pre-commit* 中定义，常用来进行本地代码的格式检查、单元测试等。
+示例代码：
+```
+#!/usr/bin/env python
 
-* commit-msg: 对提交的信息进行格式检查
+import sys
+from subprocess import call
 
-## Server hook
+
+def runsh(cmd: str):
+    ret = call(cmd, shell=True)
+    if ret != 0:
+        sys.exit(f'Encounter error when running "{cmd}", return value: {ret}')
+
+
+print('Linting codes ...')
+# runsh('flake8 .')
+runsh('flake8 --ignore=F401,E501 .')
+print('Pass!')
+```
+
+### 提交消息模板
+
+由 hook 文件 *prepare-commit-msg* 实现，例如：
+```
+#!/usr/bin/env python
+
+import sys
+
+template = """
+# This is a custom Template
+# <type>(<scope>): <subject>
+# <blank line>
+# <body>
+# <blank line>
+# <footer>
+
+# See [Git Commit Message Guidance]() for details
+
+# Example:
+
+# feat(backend): 实现了用户购物车基本功能
+
+# 通过将购买服务加入购物车中，方便用户使用优惠券等提升购物体验
+
+# Fix #233
+"""
+
+with open(sys.argv[1], 'w') as f:
+    f.write(template)
+```
+
+### 验证提交消息
+
+由 hook 文件 *commit-msg* 实现，对提交的信息进行格式检查，例如：
+```
+#!/usr/bin/env python
+
+import sys
+import re
+
+with open(sys.argv[1], 'r') as f:
+    lines = f.read().splitlines()
+
+valid_lines = [line for line in lines if (not line.startswith('#'))
+               and len(line) > 0]
+assert len(valid_lines) >= 2, '有效行数小于2'
+subject_format = (r'((feat)|(fix)|(docs)|(style)|(refactor)|(perf)|(test))'
+                  r'\(\S+\):\s.*\S')
+assert re.fullmatch(subject_format, lines[0]), '标题格式不符合要求'
+assert len(lines[1]) == 0, '标题行下面没有空行'
+assert len(lines[2].strip()) > 5, 'body 长度不足 5 个字符'
+```
+
+## Server CI/CD Tools
 
 ### Gitlab CI/CD
 
-在指定的容器（通过 `image` 关键字）中执行 CI/CD 动作，一般由 build, test, deploy 三步组成。
+在指定的运行环境（[gitlab runner](https://docs.gitlab.com/runner/)）中执行 CI/CD 动作，一般由 build, test, deploy 三步组成。
+常用的运行环境是 Docker，通过 `image` 关键字指定，例如 `image: python:3.8.9`。
 
-编写 .gitlab-ci.yml 文件，自动运行
+配置好 runner 后，根目录下包含 .gitlab-ci.yml 文件的 repo 被 push 到 remote 后开始执行 CI?CD 命令，
+在项目的 Pipelines 页面中可以实时查看运行过程，以及最终运行结果。
 
 优点：功能强大，可以对触发条件做精细控制，是代码库的一部分，方便管理
 
@@ -178,25 +250,34 @@ stages:
   - test
   - deploy
 
-image: alpine
+image: python:3.8.9
 
-job1:
+build-app:
   stage: build
   script:
-    - echo "step 1"
-    - echo "step 2"
+    - pip install -r requirements.txt
 
-job2:
+func-test:
   stage: test
   script:
-    - echo "run test 1"
-    - echo "run test 2"
+    - pip install -r requirements.txt
+    - pytest
 
-job3:
+deploy to production:
   stage: deploy
   script:
-    - echo "run job 1"
-    - echo "run job 2"
+    - echo "push codes to production server"
+  environment: production
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+
+deploy to staging:
+  stage: deploy
+  script:
+    - echo "push codes to staging server"
+  environment: staging
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
 ```
 
 顶层标签是 <job-name> or `stages` or `workflow` or `image`.
@@ -334,3 +415,5 @@ $ git flow feature start naive-func
 * [Server hooks](https://docs.gitlab.com/ee/administration/server_hooks.html)
 * [How To Use Git Hooks To Automate Development and Deployment Tasks](https://www.digitalocean.com/community/tutorials/how-to-use-git-hooks-to-automate-development-and-deployment-tasks)
 * [How to manage projects under Version Control Systems](https://intellij-support.jetbrains.com/hc/en-us/articles/206544839-How-to-manage-projects-under-Version-Control-Systems)
+* [How to use GitLab CI to deploy to multiple environments](https://about.gitlab.com/blog/2021/02/05/ci-deployment-and-environments/)
+* [Keyword reference for the .gitlab-ci.yml file](https://docs.gitlab.com/ee/ci/yaml/README.html)
