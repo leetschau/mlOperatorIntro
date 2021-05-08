@@ -170,33 +170,32 @@ print('Pass!')
 ### 提交消息模板
 
 由 hook 文件 *prepare-commit-msg* 实现，例如：
-```
-#!/usr/bin/env python
 
-import sys
+    #!/usr/bin/env python
 
-template = """
-# This is a custom Template
-# <type>(<scope>): <subject>
-# <blank line>
-# <body>
-# <blank line>
-# <footer>
+    import sys
 
-# See [Git Commit Message Guidance]() for details
+    template = """
+    # This is a custom Template
+    # <type>(<scope>): <subject>
+    # <blank line>
+    # <body>
+    # <blank line>
+    # <footer>
 
-# Example:
+    # See [Git Commit Message Guidance]() for details
 
-# feat(backend): 实现了用户购物车基本功能
+    # Example:
 
-# 通过将购买服务加入购物车中，方便用户使用优惠券等提升购物体验
+    # feat(backend): 实现了用户购物车基本功能
 
-# Fix #233
-"""
+    # 通过将购买服务加入购物车中，方便用户使用优惠券等提升购物体验
 
-with open(sys.argv[1], 'w') as f:
-    f.write(template)
-```
+    # Fix #233
+    """
+
+    with open(sys.argv[1], 'w') as f:
+        f.write(template)
 
 ### 验证提交消息
 
@@ -389,7 +388,6 @@ Support branches? [support/]
 Version tag prefix? []
 Hooks and filters directory? [/home/leo/Documents/messenger/.git/hooks]
 # on develop branch
-
 # here run `git config core.hooksPath ~/Documents/git-template/hooks` to set template for only this repo
 
 $ git flow feature start naive-func
@@ -405,6 +403,15 @@ $ git flow feature start naive-func
 并写入到中心库中。
 
 开发者的第一个动作不是 clone，而是 fork。
+
+# Roadmap
+
+1. 在部分项目上使用 hooks，验证代码和提交信息规范性；
+1. 在部分项目上使用 git flow，验证代码审查、开发与发布分离；
+1. 搭建 gitlab runner；
+1. 在部分项目上使用自动发布机制（gitlab-ci.yml），实现 develop 提交后自动发布到 staging 环境；
+1. 通过自动发布机制实现 master 提交后自动发布到 beta 环境；
+1. 在上述实践通过验证后，推广到更多项目。
 
 # References
 
