@@ -2,8 +2,7 @@
 
 机器学习常用算法实现介绍，基于R and Python 语言。
 
-
-# Install
+## Install
 
 For Ubuntu 18.04 or Linux Mint 19:
 ```
@@ -12,3 +11,4 @@ $ R
 > install.packages('xml2', dependencies=TRUE, INSTALL_opts = c('--no-lock'))
 > install.packages(c('forecast', 'fpc', 'e1071', 'dbscan', 'limSolve', 'reticulate', 'gapminder', 'nycflights13', 'tidyverse'))
 ```
+
