@@ -6,3 +6,4 @@ rsconnect/
 **/.ipynb_checkpoints/
 packrat/lib*/
 packrat/src/
+.env/
